@@ -4,30 +4,42 @@ SaaS de gestão para a Pousada Viva Mar: reservas, quartos, calendário, finance
 
 ## Estrutura
 
+O projeto está organizado em dois blocos principais no mesmo repositório:
+
+- `frontend/`: app Next.js, rotas públicas e APIs do painel.
+- `backend/`: lógica de domínio, modelos, serviços e mocks usados pelo app.
+
 ```text
-app/
-  api/
-    auth/            login/logout
-    public/           rotas consumidas pela landing page externa (sem sessão)
-    tenant/           rotas autenticadas do painel (reservas, quartos, cupons, equipe, despesas)
-    webhooks/         provisionamento de novos tenants
-  dashboard/          páginas do painel (calendário, financeiro, equipe, hóspedes, quartos...)
-  page.tsx            página de login
-actions/              server actions (reservas, despesas)
-components/            componentes de UI, incluindo components/calendar/
-lib/
-  auth.ts             sessão JWT (HMAC-SHA256, cookie httpOnly)
-  tenant-session.ts   sessão revalidada no banco a cada request de API
-  db.ts               conexão Sequelize + migrações incrementais
-  dashboard-access.ts  controle de acesso por feature/role
-  room-policies.ts    tarifas sazonais, estadia mínima, fechamentos
-models/               modelos Sequelize (MySQL)
-services/
-  tenantService.ts    acesso a dados por tenant
-  demoData.ts          dados de demonstração (tenant/usuário fixos)
-types/
-  domain.ts           tipos de domínio (Room, Reservation, Expense...)
-middleware.ts          protege /dashboard/* (redirecionamento); não cobre /api/*
+frontend/
+  app/
+    api/
+      auth/            login/logout
+      public/          rotas consumidas pela landing page externa (sem sessão)
+      tenant/          rotas autenticadas do painel (reservas, quartos, cupons, equipe, despesas)
+      webhooks/        provisionamento de novos tenants
+    dashboard/         páginas do painel (calendário, financeiro, equipe, hóspedes, quartos...)
+    page.tsx           página de login
+  components/          componentes de UI, incluindo components/calendar/
+  middleware.ts        protege /dashboard/* (redirecionamento); não cobre /api/*
+  next.config.ts
+  tsconfig.json
+  tailwind.config.ts
+backend/
+  actions/            server actions (reservas, despesas)
+  lib/
+    auth.ts             sessão JWT (HMAC-SHA256, cookie httpOnly)
+    tenant-session.ts   sessão revalidada no banco a cada request de API
+    db.ts               conexão Sequelize + migrações incrementais
+    dashboard-access.ts controle de acesso por feature/role
+    room-policies.ts    tarifas sazonais, estadia mínima, fechamentos
+    ...
+  models/             modelos Sequelize (MySQL)
+  services/
+    tenantService.ts    acesso a dados por tenant
+    demoData.ts         dados de demonstração (tenant/usuário fixos)
+  types/
+    domain.ts           tipos de domínio (Room, Reservation, Expense...)
+  mocks/              dados de demonstração usados em dev
 ```
 
 ## Autenticação e autorização

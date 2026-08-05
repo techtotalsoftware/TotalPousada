@@ -1,13 +1,13 @@
 {
-  "name": "pousada-viva-mar-saas",
+  "name": "TotalPousada-Saas",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node --env-file=.env ./node_modules/next/dist/bin/next dev",
-    "build": "next build",
-    "start": "node --env-file=.env ./node_modules/next/dist/bin/next start",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "dev": "cd frontend && node --env-file=../.env ../node_modules/next/dist/bin/next dev",
+    "build": "cd frontend && node ../node_modules/next/dist/bin/next build",
+    "start": "cd frontend && node --env-file=../.env ../node_modules/next/dist/bin/next start",
+    "lint": "cd frontend && node ../node_modules/next/dist/bin/next lint",
+    "typecheck": "cd frontend && node ../node_modules/typescript/bin/tsc --noEmit"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
