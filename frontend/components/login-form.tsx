@@ -1,16 +1,21 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { LoaderCircle, LockKeyhole, Mail } from 'lucide-react';
-import { FormEvent, useState } from 'react';
+import { motion } from "framer-motion";
+import { LoaderCircle, LockKeyhole, Mail } from "lucide-react";
+import { FormEvent, useState } from "react";
 
-const SHOW_DEMO_LOGIN = process.env.NEXT_PUBLIC_SHOW_DEMO_LOGIN === 'true';
-const DEMO_EMAIL = 'gestao@pousadavivamar.com';
-const DEMO_PASSWORD = 'vivamar123';
+const SHOW_DEMO_LOGIN = process.env.NEXT_PUBLIC_SHOW_DEMO_LOGIN === "true";
+const DEMO_EMAIL = "gestao@pousadavivamar.com";
+const DEMO_PASSWORD = "vivamar123";
 
 export function LoginForm() {
-  const [email, setEmail] = useState(SHOW_DEMO_LOGIN ? DEMO_EMAIL : '');
-  const [password, setPassword] = useState(SHOW_DEMO_LOGIN ? DEMO_PASSWORD : '');
+  const [tenantSlug, setTenantSlug] = useState(
+    SHOW_DEMO_LOGIN ? "viva-mar" : "",
+  );
+  const [email, setEmail] = useState(SHOW_DEMO_LOGIN ? DEMO_EMAIL : "");
+  const [password, setPassword] = useState(
+    SHOW_DEMO_LOGIN ? DEMO_PASSWORD : "",
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -23,31 +28,37 @@ export function LoginForm() {
     const timeout = setTimeout(() => controller.abort(), 15000);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        credentials: 'include',
-        cache: 'no-store',
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ tenantSlug, email, password }),
         signal: controller.signal,
       });
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => ({}))) as { message?: string };
-        setError(payload.message ?? 'Não foi possível acessar a conta.');
+        const payload = (await response.json().catch(() => ({}))) as {
+          message?: string;
+        };
+        setError(payload.message ?? "Não foi possível acessar a conta.");
         return;
       }
 
-      window.location.assign('/dashboard/calendar');
+      window.location.assign("/dashboard/calendar");
     } catch (fetchError) {
-      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        setError('A requisição demorou demais. Verifique o servidor e tente novamente.');
+      if (fetchError instanceof Error && fetchError.name === "AbortError") {
+        setError(
+          "A requisição demorou demais. Verifique o servidor e tente novamente.",
+        );
         return;
       }
 
-      setError('Não foi possível conectar ao servidor. Tente novamente em instantes.');
+      setError(
+        "Não foi possível conectar ao servidor. Tente novamente em instantes.",
+      );
     } finally {
       clearTimeout(timeout);
       setLoading(false);
@@ -58,7 +69,7 @@ export function LoginForm() {
     <motion.form
       initial={false}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
       onSubmit={handleSubmit}
       className="glass-panel w-full max-w-md rounded-[32px] p-8"
     >
@@ -66,15 +77,35 @@ export function LoginForm() {
         <span className="inline-flex rounded-full border border-sky-400/20 bg-sky-400/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.3em] text-sky-200">
           Sistema de Gestão de Reservas
         </span>
-        <h1 className="text-3xl font-semibold text-white">Bem-vindo de volta</h1>
+        <h1 className="text-3xl font-semibold text-white">
+          Bem-vindo de volta
+        </h1>
         <p className="text-sm leading-6 text-slate-300">
-          Entre para acompanhar a ocupação, organizar bloqueios e manter o calendário da sua hospedagem sempre atualizado.
+          Entre para acompanhar a ocupação, organizar bloqueios e manter o
+          calendário da sua hospedagem sempre atualizado.
         </p>
       </div>
 
       <div className="space-y-4">
         <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-200">E-mail</span>
+          <span className="mb-2 block text-sm font-medium text-slate-200">
+            Slug da pousada
+          </span>
+          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
+            <input
+              type="text"
+              value={tenantSlug}
+              onChange={(event) => setTenantSlug(event.target.value)}
+              className="w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500"
+              placeholder="ex: viva-mar"
+            />
+          </div>
+        </label>
+
+        <label className="block">
+          <span className="mb-2 block text-sm font-medium text-slate-200">
+            E-mail
+          </span>
           <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
             <Mail className="h-4 w-4 text-slate-400" />
             <input
@@ -88,7 +119,9 @@ export function LoginForm() {
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-200">Senha</span>
+          <span className="mb-2 block text-sm font-medium text-slate-200">
+            Senha
+          </span>
           <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
             <LockKeyhole className="h-4 w-4 text-slate-400" />
             <input

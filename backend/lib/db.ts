@@ -1,6 +1,6 @@
-import { initializeModels, createSequelizeClient } from '@/models';
-import { DataTypes } from 'sequelize';
-import { generateUniqueTenantSlug } from '@/lib/tenant-slug';
+import { initializeModels, createSequelizeClient } from "@/models";
+import { DataTypes } from "sequelize";
+import { generateUniqueTenantSlug } from "@/lib/tenant-slug";
 
 export type DbModels = ReturnType<typeof initializeModels>;
 
@@ -13,63 +13,71 @@ declare global {
 
 function shouldAutoSyncSchema() {
   const envValue = process.env.DB_AUTO_SYNC;
-  if (typeof envValue === 'string') {
-    return envValue === 'true';
+  if (typeof envValue === "string") {
+    return envValue === "true";
   }
 
-  return process.env.NODE_ENV !== 'production';
+  return process.env.NODE_ENV !== "production";
 }
 
 async function ensureRoomAmenitiesColumn(models: DbModels) {
-  const table = await models.sequelize.getQueryInterface().describeTable('rooms');
+  const table = await models.sequelize
+    .getQueryInterface()
+    .describeTable("rooms");
 
   if (!table.amenities) {
-    await models.sequelize.getQueryInterface().addColumn('rooms', 'amenities', {
+    await models.sequelize.getQueryInterface().addColumn("rooms", "amenities", {
       type: DataTypes.TEXT,
       allowNull: true,
       defaultValue: null,
-      comment: 'JSON array de comodidades',
+      comment: "JSON array de comodidades",
     });
   }
 
   if (!table.photo_urls) {
-    await models.sequelize.getQueryInterface().addColumn('rooms', 'photo_urls', {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      defaultValue: null,
-      comment: 'JSON array de URLs das fotos',
-    });
+    await models.sequelize
+      .getQueryInterface()
+      .addColumn("rooms", "photo_urls", {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: null,
+        comment: "JSON array de URLs das fotos",
+      });
   }
 
   if (!table.beds) {
-    await models.sequelize.getQueryInterface().addColumn('rooms', 'beds', {
+    await models.sequelize.getQueryInterface().addColumn("rooms", "beds", {
       type: DataTypes.TEXT,
       allowNull: true,
       defaultValue: null,
-      comment: 'JSON array de camas: [{ type, quantity }]',
+      comment: "JSON array de camas: [{ type, quantity }]",
     });
   }
 }
 
 async function ensureReservationUnitNumberColumn(models: DbModels) {
-  const table = await models.sequelize.getQueryInterface().describeTable('reservations');
+  const table = await models.sequelize
+    .getQueryInterface()
+    .describeTable("reservations");
 
   if (!table.unit_number) {
-    await models.sequelize.getQueryInterface().addColumn('reservations', 'unit_number', {
-      type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: true,
-      defaultValue: null,
-      comment: 'Número da unidade física (1..quantity) ocupada pela reserva',
-    });
+    await models.sequelize
+      .getQueryInterface()
+      .addColumn("reservations", "unit_number", {
+        type: DataTypes.INTEGER.UNSIGNED,
+        allowNull: true,
+        defaultValue: null,
+        comment: "Número da unidade física (1..quantity) ocupada pela reserva",
+      });
   }
 }
 
 async function ensureReservationStayColumns(models: DbModels) {
   const queryInterface = models.sequelize.getQueryInterface();
-  const table = await queryInterface.describeTable('reservations');
+  const table = await queryInterface.describeTable("reservations");
 
   if (!table.checked_in_at) {
-    await queryInterface.addColumn('reservations', 'checked_in_at', {
+    await queryInterface.addColumn("reservations", "checked_in_at", {
       type: DataTypes.DATE,
       allowNull: true,
       defaultValue: null,
@@ -77,7 +85,7 @@ async function ensureReservationStayColumns(models: DbModels) {
   }
 
   if (!table.checked_out_at) {
-    await queryInterface.addColumn('reservations', 'checked_out_at', {
+    await queryInterface.addColumn("reservations", "checked_out_at", {
       type: DataTypes.DATE,
       allowNull: true,
       defaultValue: null,
@@ -87,10 +95,10 @@ async function ensureReservationStayColumns(models: DbModels) {
 
 async function ensureTenantSlugColumn(models: DbModels) {
   const queryInterface = models.sequelize.getQueryInterface();
-  const table = await queryInterface.describeTable('tenants');
+  const table = await queryInterface.describeTable("tenants");
 
   if (!table.slug) {
-    await queryInterface.addColumn('tenants', 'slug', {
+    await queryInterface.addColumn("tenants", "slug", {
       type: DataTypes.STRING(160),
       allowNull: true,
       unique: true,
@@ -100,13 +108,20 @@ async function ensureTenantSlugColumn(models: DbModels) {
   // Preenche o slug de tenants antigos (criados antes desta coluna existir)
   // a partir do nome, para que as rotas públicas possam identificá-los sem
   // depender do id numérico interno.
-  const tenantsWithoutSlug = await models.Tenant.findAll({ where: { slug: null } });
+  const tenantsWithoutSlug = await models.Tenant.findAll({
+    where: { slug: null },
+  });
 
   for (const tenant of tenantsWithoutSlug) {
-    const slug = await generateUniqueTenantSlug(tenant.name, async (candidate) => {
-      const existing = await models.Tenant.findOne({ where: { slug: candidate } });
-      return Boolean(existing);
-    });
+    const slug = await generateUniqueTenantSlug(
+      tenant.name,
+      async (candidate) => {
+        const existing = await models.Tenant.findOne({
+          where: { slug: candidate },
+        });
+        return Boolean(existing);
+      },
+    );
 
     await tenant.update({ slug });
   }
@@ -114,18 +129,18 @@ async function ensureTenantSlugColumn(models: DbModels) {
 
 async function ensureUserTeamColumns(models: DbModels) {
   const queryInterface = models.sequelize.getQueryInterface();
-  const table = await queryInterface.describeTable('users');
+  const table = await queryInterface.describeTable("users");
 
   if (!table.name) {
-    await queryInterface.addColumn('users', 'name', {
+    await queryInterface.addColumn("users", "name", {
       type: DataTypes.STRING(120),
       allowNull: false,
-      defaultValue: '',
+      defaultValue: "",
     });
   }
 
   if (!table.phone) {
-    await queryInterface.addColumn('users', 'phone', {
+    await queryInterface.addColumn("users", "phone", {
       type: DataTypes.STRING(30),
       allowNull: true,
       defaultValue: null,
@@ -133,39 +148,39 @@ async function ensureUserTeamColumns(models: DbModels) {
   }
 
   if (!table.team_role) {
-    await queryInterface.addColumn('users', 'team_role', {
-      type: DataTypes.ENUM('Recepcao', 'Limpeza', 'Manutencao', 'Gestao'),
+    await queryInterface.addColumn("users", "team_role", {
+      type: DataTypes.ENUM("Recepcao", "Limpeza", "Manutencao", "Gestao"),
       allowNull: false,
-      defaultValue: 'Recepcao',
+      defaultValue: "Recepcao",
     });
   }
 
   if (!table.employment_status) {
-    await queryInterface.addColumn('users', 'employment_status', {
-      type: DataTypes.ENUM('active', 'inactive'),
+    await queryInterface.addColumn("users", "employment_status", {
+      type: DataTypes.ENUM("active", "inactive"),
       allowNull: false,
-      defaultValue: 'active',
+      defaultValue: "active",
     });
   }
 
   if (!table.shift_status) {
-    await queryInterface.addColumn('users', 'shift_status', {
-      type: DataTypes.ENUM('off', 'on_shift'),
+    await queryInterface.addColumn("users", "shift_status", {
+      type: DataTypes.ENUM("off", "on_shift"),
       allowNull: false,
-      defaultValue: 'off',
+      defaultValue: "off",
     });
   }
 
   if (!table.shift_label) {
-    await queryInterface.addColumn('users', 'shift_label', {
-      type: DataTypes.ENUM('morning', 'afternoon', 'night'),
+    await queryInterface.addColumn("users", "shift_label", {
+      type: DataTypes.ENUM("morning", "afternoon", "night"),
       allowNull: false,
-      defaultValue: 'morning',
+      defaultValue: "morning",
     });
   }
 
   if (!table.last_punch_at) {
-    await queryInterface.addColumn('users', 'last_punch_at', {
+    await queryInterface.addColumn("users", "last_punch_at", {
       type: DataTypes.DATE,
       allowNull: true,
       defaultValue: null,
@@ -173,10 +188,10 @@ async function ensureUserTeamColumns(models: DbModels) {
   }
 
   if (!table.dashboard_permissions) {
-    await queryInterface.addColumn('users', 'dashboard_permissions', {
+    await queryInterface.addColumn("users", "dashboard_permissions", {
       type: DataTypes.TEXT,
       allowNull: false,
-      defaultValue: '[]',
+      defaultValue: "[]",
     });
   }
 }
@@ -190,23 +205,56 @@ async function ensureUserTeamColumns(models: DbModels) {
 async function ensureUniqueIndexes(models: DbModels) {
   const queryInterface = models.sequelize.getQueryInterface();
 
-  const targets: Array<{ table: string; column: string; indexName: string }> = [
-    { table: 'rooms', column: 'local_room_id', indexName: 'local_room_id' },
-    { table: 'rooms', column: 'channex_room_type_id', indexName: 'channex_room_type_id' },
-    { table: 'users', column: 'email', indexName: 'email' },
-    { table: 'reservations', column: 'channex_reservation_id', indexName: 'channex_reservation_id' },
-    { table: 'tenants', column: 'slug', indexName: 'slug' },
+  const targets: Array<{
+    table: string;
+    column: string | string[];
+    indexName: string;
+  }> = [
+    { table: "rooms", column: "local_room_id", indexName: "local_room_id" },
+    {
+      table: "rooms",
+      column: "channex_room_type_id",
+      indexName: "channex_room_type_id",
+    },
+    {
+      table: "users",
+      column: ["tenant_id", "email"],
+      indexName: "tenant_email",
+    },
+    {
+      table: "reservations",
+      column: "channex_reservation_id",
+      indexName: "channex_reservation_id",
+    },
+    { table: "tenants", column: "slug", indexName: "slug" },
   ];
 
   for (const target of targets) {
-    const existingIndexes = await queryInterface.showIndex(target.table) as Array<{ name: string }>;
-    const alreadyExists = existingIndexes.some((index) => index.name === target.indexName);
+    const existingIndexes = (await queryInterface.showIndex(
+      target.table,
+    )) as Array<{ name: string }>;
+    const alreadyExists = existingIndexes.some(
+      (index) => index.name === target.indexName,
+    );
 
     if (!alreadyExists) {
-      await queryInterface.addIndex(target.table, [target.column], {
-        name: target.indexName,
-        unique: true,
-      });
+      if (target.table === "users" && target.indexName === "tenant_email") {
+        const hasEmailIndex = existingIndexes.some(
+          (index) => index.name === "email",
+        );
+        if (hasEmailIndex) {
+          await queryInterface.removeIndex(target.table, "email");
+        }
+      }
+
+      await queryInterface.addIndex(
+        target.table,
+        Array.isArray(target.column) ? target.column : [target.column],
+        {
+          name: target.indexName,
+          unique: true,
+        },
+      );
     }
   }
 }
