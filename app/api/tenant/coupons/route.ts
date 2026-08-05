@@ -1,0 +1,90 @@
+import { NextResponse } from "next/server";
+import { getDb } from "@/lib/db";
+import { getVerifiedTenantSession, hasFeatureAccess } from "@/lib/tenant-session";
+
+// LISTAR: Pega todos os cupons do tenant autenticado
+export async function GET() {
+  try {
+    const session = await getVerifiedTenantSession();
+    if (!session) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+    if (!hasFeatureAccess(session, "promotions")) {
+      return NextResponse.json({ error: "Sem permissão para esta ação." }, { status: 403 });
+    }
+
+    const { Coupon } = await getDb();
+    const coupons = await Coupon.findAll({
+      where: { tenantId: session.tenantId },
+      order: [["createdAt", "DESC"]],
+    });
+    return NextResponse.json(coupons, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// CRIAR: Adiciona um novo cupom no banco
+export async function POST(request: Request) {
+  try {
+    const session = await getVerifiedTenantSession();
+    if (!session) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+    if (!hasFeatureAccess(session, "promotions")) {
+      return NextResponse.json({ error: "Sem permissão para esta ação." }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { Coupon } = await getDb();
+
+    const code = String(body.code ?? "").trim().toUpperCase();
+    if (!code) {
+      return NextResponse.json({ error: "Código do cupom é obrigatório." }, { status: 400 });
+    }
+
+    const discountPercentage = Number(body.discountPercentage);
+    if (!Number.isFinite(discountPercentage) || discountPercentage <= 0 || discountPercentage > 100) {
+      return NextResponse.json(
+        { error: "Percentual de desconto deve estar entre 1 e 100." },
+        { status: 400 },
+      );
+    }
+
+    let usageLimit: number | null = null;
+    if (body.usageLimit !== undefined && body.usageLimit !== null && body.usageLimit !== "") {
+      const parsedLimit = Number(body.usageLimit);
+      if (!Number.isInteger(parsedLimit) || parsedLimit < 1) {
+        return NextResponse.json(
+          { error: "Limite de uso deve ser um número inteiro maior que zero." },
+          { status: 400 },
+        );
+      }
+      usageLimit = parsedLimit;
+    }
+
+    // Verifica se o código já existe
+    const existing = await Coupon.findOne({
+      where: { tenantId: session.tenantId, code },
+    });
+    if (existing) {
+      return NextResponse.json(
+        { error: "Já existe um cupom com este código." },
+        { status: 400 },
+      );
+    }
+
+    const newCoupon = await Coupon.create({
+      tenantId: session.tenantId,
+      code,
+      discountPercentage,
+      usageLimit,
+      status: "active",
+      usedCount: 0,
+    });
+
+    return NextResponse.json(newCoupon, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
