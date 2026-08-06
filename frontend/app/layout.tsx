@@ -1,14 +1,16 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { ToastProvider } from '@/components/toast-provider';
-import { ThemeToggle } from '@/components/theme-toggle';
+import type { Metadata } from "next";
+import "./globals.css";
+import { ToastProvider } from "@/components/toast-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const metadata: Metadata = {
-  title: 'Pousada Sancho | Channel Manager',
-  description: 'MVP de channel manager para prevenção de overbooking em pousadas.',
+  title: "Total Pousada | Gerenciamento interno",
+  description: "Gerenciamento de Reservas e dados internos da pousada.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR" className="light" suppressHydrationWarning>
       <head>
