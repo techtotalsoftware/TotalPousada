@@ -69,11 +69,9 @@ export function DashboardSidebar({
     <div className="flex items-start justify-between gap-4 border-b border-slate-200/80 pb-5 dark:border-white/10">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.35em] text-sky-600 dark:text-sky-300">
-          Pousada Viva Mar
-        </p>
-        <h1 className="mt-3 text-2xl font-semibold text-slate-900 dark:text-white">
           {tenantName}
-        </h1>
+        </p>
+
         <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
           Painel operacional para disponibilidade, moderação de reservas e
           controle financeiro.

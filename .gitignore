@@ -27,4 +27,4 @@ Thumbs.db
 .vscode/
 .idea/
 
-/public/uploads
+/public/uploads/*
