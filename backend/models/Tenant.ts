@@ -1,5 +1,5 @@
-import { prisma } from "../lib/db";
-import { TenantPlan, isValidPlan } from "../lib/plan-enum";
+import { Sequelize, Model, DataTypes } from 'sequelize';
+import { TenantPlan } from '../lib/plan-enum';
 
 export type TenantModel = {
   id: string;
@@ -10,113 +10,64 @@ export type TenantModel = {
   updatedAt: Date;
 };
 
-export class Tenant {
-  static async findById(id: string): Promise<TenantModel | null> {
-    const tenant = await prisma.tenant.findUnique({
-      where: { id },
-    });
-
-    if (!tenant) return null;
-
-    return {
-      id: tenant.id,
-      name: tenant.name,
-      slug: tenant.slug,
-      plan: tenant.plan as TenantPlan,
-      createdAt: tenant.createdAt,
-      updatedAt: tenant.updatedAt,
-    };
-  }
-
-  static async findBySlug(slug: string): Promise<TenantModel | null> {
-    const tenant = await prisma.tenant.findUnique({
-      where: { slug },
-    });
-
-    if (!tenant) return null;
-
-    return {
-      id: tenant.id,
-      name: tenant.name,
-      slug: tenant.slug,
-      plan: tenant.plan as TenantPlan,
-      createdAt: tenant.createdAt,
-      updatedAt: tenant.updatedAt,
-    };
-  }
-
-  /**
-   * Atualiza o plano de um tenant com validaåııo estrita
-   * @param tenantId - ID do tenant
-   * @param newPlan - Novo plano (string para validaåııo)
-   * @returns Tenant atualizado
-   * @throws Error - Se o plano for inváıılido
-   */
-  static async updatePlan(
-    tenantId: string,
-    newPlan: string
-  ): Promise<TenantModel> {
-    // VALIDAÇªÍıO OBRIGATÓıÓıRIA DO PLANO - IMPRESCINDÍıVEL
-    if (!isValidPlan(newPlan)) {
-      throw new Error(
-        `Plano inváıılido: ${newPlan}. Valores aceitos: ${Object.values(
-          TenantPlan
-        ).join(", ")}`
-      );
-    }
-
-    const tenant = await prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        plan: newPlan as TenantPlan,
+export class Tenant extends Model {
+  static initialize(sequelize: Sequelize) {
+    Tenant.init(
+      {
+        id: {
+          type: DataTypes.STRING,
+          primaryKey: true,
+          defaultValue: () => Math.random().toString(36).substr(2, 9),
+        },
+        name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        slug: {
+          type: DataTypes.STRING,
+          allowNull: false,
+          unique: true,
+        },
+        plan: {
+          type: DataTypes.ENUM('Basic', 'Premium', 'Enterprise'),
+          allowNull: false,
+          defaultValue: 'Basic',
+        },
+        createdAt: {
+          type: DataTypes.DATE,
+          field: 'createdAt',
+        },
+        updatedAt: {
+          type: DataTypes.DATE,
+          field: 'updatedAt',
+        },
       },
-    });
-
-    return {
-      id: tenant.id,
-      name: tenant.name,
-      slug: tenant.slug,
-      plan: tenant.plan as TenantPlan,
-      createdAt: tenant.createdAt,
-      updatedAt: tenant.updatedAt,
-    };
+      {
+        sequelize,
+        modelName: 'Tenant',
+        tableName: 'tenants',
+        timestamps: true,
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt',
+        hooks: {
+          beforeValidate: (tenant) => {
+            const validPlans = ['Basic', 'Premium', 'Enterprise'];
+            if (tenant.plan && !validPlans.includes(tenant.plan)) {
+              throw new Error(
+                `Plano inváıılido: ${tenant.plan}. Valores aceitos: ${validPlans.join(', ')}`
+              );
+            }
+          },
+        },
+      }
+    );
   }
 
-  /**
-   * Cria um novo tenant com validaåııo do plano
-   * @param data - Dados do tenant
-   * @returns Tenant criado
-   * @throws Error - Se o plano for inváıılido
-   */
-  static async create(data: {
-    name: string;
-    slug: string;
-    plan: string;
-  }): Promise<TenantModel> {
-    // VALIDAÇªÍıO OBRIGATÓıÓıRIA DO PLANO - IMPRESCINDÍıVEL
-    if (!isValidPlan(data.plan)) {
-      throw new Error(
-        `Plano inváıılido: ${data.plan}. Valores aceitos: ${Object.values(
-          TenantPlan
-        ).join(", ")}`
-      );
-    }
+  static async findById(id: string): Promise<Tenant | null> {
+    return Tenant.findOne({ where: { id } });
+  }
 
-    const tenant = await prisma.tenant.create({
-      data: {
-        name: data.name,
-        slug: data.slug,
-        plan: data.plan as TenantPlan,
-      },
-    });
-
-    return {
-      id: tenant.id,
-      name: tenant.name,
-      slug: tenant.slug,
-      plan: tenant.plan as TenantPlan,
-      createdAt: tenant.createdAt,
-      updatedAt: tenant.updatedAt,
-    };
+  static async findBySlug(slug: string): Promise<Tenant | null> {
+    return Tenant.findOne({ where: { slug } });
   }
 }
