@@ -69,11 +69,9 @@ export function DashboardSidebar({
     <div className="flex items-start justify-between gap-4 border-b border-slate-200/80 pb-5 dark:border-white/10">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.35em] text-sky-600 dark:text-sky-300">
-          Pousada Sancho
-        </p>
-        <h1 className="mt-3 text-2xl font-semibold text-slate-900 dark:text-white">
           {tenantName}
-        </h1>
+        </p>
+
         <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
           Painel operacional para disponibilidade, moderação de reservas e
           controle financeiro.
@@ -89,7 +87,8 @@ export function DashboardSidebar({
         // começa com "/dashboard/calendar", o que marcava os dois itens como
         // ativos ao mesmo tempo. Só conta como ativo se for o caminho exato
         // ou uma subrota dele (com "/" na sequência).
-        const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const isActive =
+          pathname === item.href || pathname.startsWith(`${item.href}/`);
         const Icon = ICONS[item.href] ?? CalendarRange;
 
         return (
@@ -105,7 +104,12 @@ export function DashboardSidebar({
                 : "border-slate-200 bg-white/80 hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:bg-slate-950/40 dark:hover:border-white/15 dark:hover:bg-slate-800/80",
             )}
           >
-            <div className={cn("flex items-center gap-3", collapsed && "lg:justify-center lg:gap-0")}>
+            <div
+              className={cn(
+                "flex items-center gap-3",
+                collapsed && "lg:justify-center lg:gap-0",
+              )}
+            >
               <div
                 className={cn(
                   "rounded-2xl p-3",
@@ -117,8 +121,12 @@ export function DashboardSidebar({
                 <Icon className="h-5 w-5" />
               </div>
               <div className={cn(collapsed && "lg:hidden")}>
-                <p className="font-medium text-slate-900 dark:text-white">{item.label}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{item.description}</p>
+                <p className="font-medium text-slate-900 dark:text-white">
+                  {item.label}
+                </p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {item.description}
+                </p>
               </div>
             </div>
           </Link>
@@ -133,9 +141,11 @@ export function DashboardSidebar({
       <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white/85 px-4 py-3 shadow-lg backdrop-blur dark:border-white/10 dark:bg-slate-900/85 lg:hidden">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-sky-600 dark:text-sky-300">
-            Pousada Sancho
+            Pousada Viva Mar
           </p>
-          <p className="text-sm font-semibold text-slate-900 dark:text-white">{tenantName}</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-white">
+            {tenantName}
+          </p>
         </div>
         <button
           onClick={() => setMobileOpen(true)}
@@ -185,7 +195,11 @@ export function DashboardSidebar({
             collapsed ? "mx-auto flex" : "ml-auto flex",
           )}
         >
-          {collapsed ? <PanelLeft className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+          {collapsed ? (
+            <PanelLeft className="h-5 w-5" />
+          ) : (
+            <PanelLeftClose className="h-5 w-5" />
+          )}
         </button>
 
         {!collapsed && header}
