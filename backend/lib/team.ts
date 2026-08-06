@@ -1,55 +1,152 @@
-import { DASHBOARD_NAV_ITEMS, type DashboardFeatureKey } from '@/lib/dashboard-access';
-import type { TeamRole } from '@/models/User';
+import { prisma } from "./db";
+import { TenantPlan } from "./plan-enum";
+import { Feature, ensureFeatureAccess } from "./feature-access";
 
-export type TeamShift = 'Manha' | 'Tarde' | 'Noite';
-export type TeamEmploymentStatus = 'ativo' | 'inativo';
-export type TeamShiftStatus = 'fora' | 'em_turno';
+type CreateTeamInput = {
+  name: string;
+  role: string;
+  email: string;
+  permissions: string[];
+};
 
-export const TEAM_ROLE_OPTIONS: TeamRole[] = [
-  'Recepcao',
-  'Limpeza',
-  'Manutencao',
-  'Gestao',
-];
+type Context = {
+  tenant: {
+    id: string;
+    plan: string;
+  };
+  user: {
+    id: string;
+  };
+};
 
-export const TEAM_SHIFT_OPTIONS: TeamShift[] = ['Manha', 'Tarde', 'Noite'];
+/**
+ * Cria um novo membro de equipe
+ * 
+ * IMPORTANTE: Esta função só pode ser acessada por tenants com plano Enterprise
+ * Team management é uma feature exclusiva do plano Enterprise
+ */
+export async function createTeamMember(
+  data: CreateTeamInput,
+  context: Context
+) {
+  const { tenant } = context;
 
-export const TEAM_PERMISSION_OPTIONS: Array<{
-  key: DashboardFeatureKey;
-  label: string;
-}> = DASHBOARD_NAV_ITEMS.map((item) => ({
-  key: item.key,
-  label: item.label,
-}));
+  // VALIDAÇªÍıO: Team management é Enterprise
+  ensureFeatureAccess(tenant.plan as TenantPlan, Feature.TEAM_MANAGEMENT);
 
-export function shiftLabelToDb(value: TeamShift) {
-  if (value === 'Tarde') {
-    return 'afternoon' as const;
+  // Validaåııes adicionais
+  if (!data.name || data.name.trim().length === 0) {
+    throw new Error("Nome é obrigatï¿½rio");
   }
 
-  if (value === 'Noite') {
-    return 'night' as const;
+  if (!data.email || !data.email.includes("@")) {
+    throw new Error("Email válido é obrigatï¿½rio");
   }
 
-  return 'morning' as const;
+  // Cria o membro da equipe
+  const teamMember = await prisma.teamMember.create({
+    data: {
+      name: data.name,
+      role: data.role,
+      email: data.email,
+      permissions: data.permissions,
+      tenantId: tenant.id,
+      createdBy: context.user.id,
+    },
+  });
+
+  return teamMember;
 }
 
-export function shiftLabelFromDb(value: 'morning' | 'afternoon' | 'night'): TeamShift {
-  if (value === 'afternoon') {
-    return 'Tarde';
-  }
+/**
+ * Lista membros da equipe do tenant
+ */
+export async function listTeamMembers(context: Context) {
+  const { tenant } = context;
 
-  if (value === 'night') {
-    return 'Noite';
-  }
+  // VALIDAÇªÍıO: Team management é Enterprise
+  ensureFeatureAccess(tenant.plan as TenantPlan, Feature.TEAM_MANAGEMENT);
 
-  return 'Manha';
+  const teamMembers = await prisma.teamMember.findMany({
+    where: {
+      tenantId: tenant.id,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return teamMembers;
 }
 
-export function employmentStatusFromDb(value: 'active' | 'inactive'): TeamEmploymentStatus {
-  return value === 'active' ? 'ativo' : 'inativo';
+/**
+ * Deleta um membro da equipe
+ */
+export async function deleteTeamMember(
+  teamMemberId: string,
+  context: Context
+) {
+  const { tenant } = context;
+
+  // VALIDAÇªÍıO: Team management é Enterprise
+  ensureFeatureAccess(tenant.plan as TenantPlan, Feature.TEAM_MANAGEMENT);
+
+  // Verifica se o membro pertence ao tenant
+  const teamMember = await prisma.teamMember.findFirst({
+    where: {
+      id: teamMemberId,
+      tenantId: tenant.id,
+    },
+  });
+
+  if (!teamMember) {
+    throw new Error("Membro da equipe não encontrado");
+  }
+
+  await prisma.teamMember.delete({
+    where: { id: teamMemberId },
+  });
+
+  return { success: true };
 }
 
-export function shiftStatusFromDb(value: 'off' | 'on_shift'): TeamShiftStatus {
-  return value === 'on_shift' ? 'em_turno' : 'fora';
+/**
+ * Atualiza um membro da equipe
+ */
+export async function updateTeamMember(
+  teamMemberId: string,
+  data: Partial<CreateTeamInput>,
+  context: Context
+) {
+  const { tenant } = context;
+
+  // VALIDAÇªÍıO: Team management é Enterprise
+  ensureFeatureAccess(tenant.plan as TenantPlan, Feature.TEAM_MANAGEMENT);
+
+  // Verifica se o membro pertence ao tenant
+  const existingMember = await prisma.teamMember.findFirst({
+    where: {
+      id: teamMemberId,
+      tenantId: tenant.id,
+    },
+  });
+
+  if (!existingMember) {
+    throw new Error("Membro da equipe não encontrado");
+  }
+
+  // Valida email se estiver sendo atualizado
+  if (data.email && !data.email.includes("@")) {
+    throw new Error("Email válido é obrigatï¿½rio");
+  }
+
+  const teamMember = await prisma.teamMember.update({
+    where: { id: teamMemberId },
+    data: {
+      ...(data.name && { name: data.name }),
+      ...(data.role && { role: data.role }),
+      ...(data.email && { email: data.email }),
+      ...(data.permissions && { permissions: data.permissions }),
+    },
+  });
+
+  return teamMember;
 }
