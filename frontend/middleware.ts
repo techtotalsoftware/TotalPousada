@@ -19,14 +19,14 @@ export async function middleware(request: NextRequest) {
   if (isDashboardRoute && session) {
     const canAccess = canAccessDashboardPath(
       request.nextUrl.pathname,
-      session.plan as unknown as "basic" | "pro" | "premium",
+      session.plan,
       session.role,
       session.permissions,
     );
 
     if (!canAccess || !session.active) {
       const destination = getDefaultDashboardHref(
-        session.plan as unknown as "basic" | "pro" | "premium",
+        session.plan,
         session.role,
         session.permissions,
       );

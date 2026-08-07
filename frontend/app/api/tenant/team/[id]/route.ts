@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getVerifiedTenantSession } from '@/lib/tenant-session';
+import { getVerifiedTenantSession, hasFeatureAccess } from '@/lib/tenant-session';
 import {
+  hasPlanAccessToFeature,
   resolveDashboardPermissionsForRole,
   sanitizeDashboardPermissions,
   type DashboardFeatureKey,
@@ -31,6 +32,10 @@ export async function PATCH(
 
   if (session.role !== 'admin') {
     return NextResponse.json({ message: 'Somente gestores podem alterar colaboradores.' }, { status: 403 });
+  }
+
+  if (!hasFeatureAccess(session, 'team')) {
+    return NextResponse.json({ message: 'Sem permissao para esta acao.' }, { status: 403 });
   }
 
   const resolvedParams = await params;
@@ -95,7 +100,9 @@ export async function PATCH(
   }
 
   if (body.action === 'set-permissions') {
-    const permissions = sanitizeDashboardPermissions(body.permissions ?? []);
+    const permissions = sanitizeDashboardPermissions(body.permissions ?? []).filter(
+      (feature) => hasPlanAccessToFeature(session.plan, feature),
+    );
     const resolved = resolveDashboardPermissionsForRole('staff', permissions);
 
     await user.update({
@@ -120,6 +127,10 @@ export async function DELETE(
 
   if (session.role !== 'admin') {
     return NextResponse.json({ message: 'Somente gestores podem excluir colaboradores.' }, { status: 403 });
+  }
+
+  if (!hasFeatureAccess(session, 'team')) {
+    return NextResponse.json({ message: 'Sem permissao para esta acao.' }, { status: 403 });
   }
 
   const resolvedParams = await params;

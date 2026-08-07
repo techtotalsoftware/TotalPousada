@@ -1,4 +1,5 @@
 import type { Route } from 'next';
+import { TenantPlan, hasPlanAccess } from './plan-enum';
 
 export type DashboardFeatureKey =
   | 'calendar'
@@ -95,6 +96,35 @@ const FEATURE_BY_KEY = new Map(
   DASHBOARD_NAV_ITEMS.map((item) => [item.key, item]),
 );
 
+// Plano mínimo de tenant exigido por funcionalidade — é um teto por pousada,
+// independente do papel/permissão do colaborador (ver resolveDashboardPermissionsForRole).
+export const FEATURE_PLAN_REQUIREMENTS: Record<DashboardFeatureKey, TenantPlan> = {
+  reservations: TenantPlan.BASIC,
+  rooms: TenantPlan.BASIC,
+  calendar: TenantPlan.BASIC,
+  guests: TenantPlan.BASIC,
+  check: TenantPlan.BASIC,
+
+  finance: TenantPlan.PREMIUM,
+  team: TenantPlan.PREMIUM,
+
+  // Essas funcionalidades alimentam a landing page pública (tarifas/fechamentos
+  // afetam a disponibilidade em /api/public/rooms, cupons e pacotes são
+  // consumidos em /api/public/viva-mar e /api/public/addons), então ficam no
+  // mesmo pacote da Galeria — exclusivo do plano Enterprise.
+  calendar_management: TenantPlan.ENTERPRISE,
+  promotions: TenantPlan.ENTERPRISE,
+  addons: TenantPlan.ENTERPRISE,
+  gallery: TenantPlan.ENTERPRISE,
+};
+
+export function hasPlanAccessToFeature(
+  plan: TenantPlan,
+  feature: DashboardFeatureKey,
+): boolean {
+  return hasPlanAccess(plan, FEATURE_PLAN_REQUIREMENTS[feature]);
+}
+
 export const DEFAULT_STAFF_FEATURES: DashboardFeatureKey[] = [
   'calendar',
   'calendar_management',
@@ -160,18 +190,20 @@ export function resolveDashboardPermissionsForRole(
 }
 
 export function getVisibleDashboardNavItems(
-  plan: 'basic' | 'pro' | 'premium',
+  plan: TenantPlan,
   role: UserAccessRole,
   permissions: unknown,
 ): DashboardNavItem[] {
   const allowed = new Set(resolveDashboardPermissionsForRole(role, permissions));
 
-  return DASHBOARD_NAV_ITEMS.filter((item) => allowed.has(item.key));
+  return DASHBOARD_NAV_ITEMS.filter(
+    (item) => allowed.has(item.key) && hasPlanAccessToFeature(plan, item.key),
+  );
 }
 
 export function canAccessDashboardPath(
   pathname: string,
-  plan: 'basic' | 'pro' | 'premium',
+  plan: TenantPlan,
   role: UserAccessRole,
   permissions: unknown,
 ): boolean {
@@ -192,7 +224,7 @@ export function canAccessDashboardPath(
 }
 
 export function getDefaultDashboardHref(
-  plan: 'basic' | 'pro' | 'premium',
+  plan: TenantPlan,
   role: UserAccessRole,
   permissions: unknown,
 ): Route {

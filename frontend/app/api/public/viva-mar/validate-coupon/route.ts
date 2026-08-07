@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { resolvePublicTenantId } from "@/lib/public-tenant";
+import { hasPublicSiteAccess, resolvePublicTenantId } from "@/lib/public-tenant";
 
 export async function POST(request: Request) {
   try {
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
 
     const tenantId = await resolvePublicTenantId(request);
 
-    if (!tenantId) {
+    if (!tenantId || !(await hasPublicSiteAccess(tenantId))) {
       return NextResponse.json({ error: "Cupom inválido ou inexistente." }, { status: 404 });
     }
 

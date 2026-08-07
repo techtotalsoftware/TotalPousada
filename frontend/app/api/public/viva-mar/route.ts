@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAvailableRooms } from "@/services/tenantService";
 import { createPublicReservation } from "@/actions/reservation";
-import { resolvePublicTenantId } from "@/lib/public-tenant";
+import { hasPublicSiteAccess, resolvePublicTenantId } from "@/lib/public-tenant";
 
 function removeInternalRoomFields(room: Record<string, unknown>) {
   const { channexRoomTypeId: _channexRoomTypeId, ...publicRoom } = room;
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   try {
     const tenantId = await resolvePublicTenantId(request);
 
-    if (!tenantId) {
+    if (!tenantId || !(await hasPublicSiteAccess(tenantId))) {
       return NextResponse.json([], {
         headers: { "Access-Control-Allow-Origin": "*", "Cache-Control": "no-store" },
       });
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
   try {
     const tenantId = await resolvePublicTenantId(request);
 
-    if (!tenantId) {
+    if (!tenantId || !(await hasPublicSiteAccess(tenantId))) {
       return NextResponse.json(
         { error: "Nenhuma propriedade disponível para reservas no momento." },
         { status: 503, headers: corsHeaders },

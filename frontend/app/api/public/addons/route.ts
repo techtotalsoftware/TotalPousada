@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { resolvePublicTenantId } from "@/lib/public-tenant";
+import { hasPublicSiteAccess, resolvePublicTenantId } from "@/lib/public-tenant";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   try {
     const tenantId = await resolvePublicTenantId(request);
 
-    if (!tenantId) {
+    if (!tenantId || !(await hasPublicSiteAccess(tenantId))) {
       return NextResponse.json([], { status: 200, headers: corsHeaders });
     }
 

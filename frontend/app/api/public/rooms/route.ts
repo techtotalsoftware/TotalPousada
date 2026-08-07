@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAvailableRooms } from "@/services/tenantService";
-import { resolvePublicTenantId } from "@/lib/public-tenant";
+import { hasPublicSiteAccess, resolvePublicTenantId } from "@/lib/public-tenant";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
 
     const tenantId = await resolvePublicTenantId(request);
 
-    if (!tenantId) {
+    if (!tenantId || !(await hasPublicSiteAccess(tenantId))) {
       return NextResponse.json(
         [],
         {

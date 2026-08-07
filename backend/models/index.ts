@@ -1,13 +1,13 @@
 import { Sequelize } from "sequelize";
-import { Expense } from "@/models/Expense";
-import { Reservation } from "@/models/Reservation";
-import { Room } from "@/models/Room";
-import { RoomUnitStatus } from "@/models/RoomUnitStatus";
-import { Tenant } from "@/models/Tenant";
-import { User } from "@/models/User";
-import { Coupon } from "@/models/Coupon";
-import { PropertyPhoto } from "@/models/PropertyPhoto";
-import { Addon } from "@/models/Addon";
+import { Expense } from "../models/Expense";
+import { Reservation } from "../models/Reservation";
+import { Room } from "../models/Room";
+import { RoomUnitStatus } from "../models/RoomUnitStatus";
+import { Tenant } from "../models/Tenant";
+import { User } from "../models/User";
+import { Coupon } from "../models/Coupon";
+import { PropertyPhoto } from "../models/PropertyPhoto";
+import { Addon } from "../models/Addon";
 import mysql2 from "mysql2";
 
 export function createSequelizeClient() {

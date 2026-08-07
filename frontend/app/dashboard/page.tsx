@@ -10,7 +10,7 @@ export default async function DashboardIndexPage() {
   }
 
   const navItems = getVisibleDashboardNavItems(
-    session.plan as unknown as "basic" | "pro" | "premium",
+    session.plan,
     session.role,
     session.permissions,
   );

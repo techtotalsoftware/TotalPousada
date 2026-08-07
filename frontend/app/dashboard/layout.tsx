@@ -17,7 +17,7 @@ export default async function DashboardLayout({
   }
 
   const navItems = getVisibleDashboardNavItems(
-    session.plan as unknown as "basic" | "pro" | "premium",
+    session.plan,
     session.role,
     session.permissions,
   );

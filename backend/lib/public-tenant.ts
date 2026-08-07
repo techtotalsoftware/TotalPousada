@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { hasPlanAccessToFeature } from "@/lib/dashboard-access";
 
 /**
  * Resolve o tenant usado pelas rotas públicas (`/api/public/**`, consumidas
@@ -53,4 +54,16 @@ export async function resolvePublicTenantId(
   }
 
   return null;
+}
+
+/**
+ * A landing page pública (`/api/public/**`) é vendida junto com o pacote de
+ * Galeria, exclusivo do plano Enterprise. Reaproveita o mesmo requisito da
+ * feature "gallery" em vez de duplicar a regra em cada rota pública.
+ */
+export async function hasPublicSiteAccess(tenantId: number): Promise<boolean> {
+  const { Tenant } = await getDb();
+  const tenant = await Tenant.findByPk(tenantId, { attributes: ["plan"] });
+
+  return tenant ? hasPlanAccessToFeature(tenant.plan, "gallery") : false;
 }

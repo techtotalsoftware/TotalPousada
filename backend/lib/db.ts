@@ -1,6 +1,7 @@
 import { initializeModels, createSequelizeClient } from "@/models";
 import { DataTypes } from "sequelize";
 import { generateUniqueTenantSlug } from "@/lib/tenant-slug";
+import { TenantPlan } from "@/lib/plan-enum";
 
 export type DbModels = ReturnType<typeof initializeModels>;
 
@@ -124,6 +125,23 @@ async function ensureTenantSlugColumn(models: DbModels) {
     );
 
     await tenant.update({ slug });
+  }
+}
+
+async function ensureTenantPlanColumn(models: DbModels) {
+  const queryInterface = models.sequelize.getQueryInterface();
+  const table = await queryInterface.describeTable("tenants");
+
+  if (!table.plan) {
+    await queryInterface.addColumn("tenants", "plan", {
+      type: DataTypes.ENUM(
+        TenantPlan.BASIC,
+        TenantPlan.PREMIUM,
+        TenantPlan.ENTERPRISE,
+      ),
+      allowNull: false,
+      defaultValue: TenantPlan.BASIC,
+    });
   }
 }
 
@@ -273,6 +291,7 @@ export async function getDb(): Promise<DbModels> {
         // Migrações incrementais só precisam rodar uma vez, no cold start —
         // repeti-las a cada requisição soma um describeTable() por chamada.
         await ensureRoomAmenitiesColumn(global.__sequelizeModels);
+        await ensureTenantPlanColumn(global.__sequelizeModels);
         await ensureUserTeamColumns(global.__sequelizeModels);
         await ensureReservationUnitNumberColumn(global.__sequelizeModels);
         await ensureReservationStayColumns(global.__sequelizeModels);

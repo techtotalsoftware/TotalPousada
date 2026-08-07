@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Clock3, Plus, ShieldCheck } from "lucide-react";
 import type { DashboardFeatureKey } from "@/lib/dashboard-access";
-import { DEFAULT_STAFF_FEATURES } from "@/lib/dashboard-access";
+import { DEFAULT_STAFF_FEATURES, hasPlanAccessToFeature } from "@/lib/dashboard-access";
+import { TenantPlan } from "@/lib/plan-enum";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 const TEAM_ROLE_OPTIONS = [
@@ -37,6 +38,7 @@ type TeamMember = {
 type TeamResponse = {
   canManage: boolean;
   tenantSlug: string;
+  plan: TenantPlan;
   members: TeamMember[];
 };
 
@@ -67,6 +69,7 @@ export default function TeamPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canManage, setCanManage] = useState(false);
+  const [tenantPlan, setTenantPlan] = useState<TenantPlan>(TenantPlan.BASIC);
   const [busyMemberId, setBusyMemberId] = useState<number | null>(null);
   const [savingPermissionsFor, setSavingPermissionsFor] = useState<
     number | null
@@ -85,17 +88,25 @@ export default function TeamPage() {
   const [permissionDraft, setPermissionDraft] = useState<
     Record<number, DashboardFeatureKey[]>
   >({});
-  const permissionOptions: Array<{ key: DashboardFeatureKey; label: string }> =
+  const allPermissionOptions: Array<{ key: DashboardFeatureKey; label: string }> =
     [
       { key: "rooms", label: "Quartos" },
       { key: "reservations", label: "Reservas" },
+      { key: "calendar", label: "Calendário" },
+      { key: "calendar_management", label: "Calendário de gestão" },
+      { key: "check", label: "Check-in e Check-out" },
+      { key: "guests", label: "Hóspedes" },
       { key: "gallery", label: "Galeria" },
       { key: "finance", label: "Financeiro" },
-      { key: "team", label: "Equipe" },
       { key: "promotions", label: "Promoções" },
-      { key: "calendar", label: "Calendário" },
-      { key: "guests", label: "Hóspedes" },
+      { key: "addons", label: "Pacotes & Adicionais" },
+      { key: "team", label: "Equipe" },
     ];
+  // O plano da pousada é um teto: não faz sentido oferecer uma permissão que
+  // a rota de API vai negar de qualquer forma (ver hasFeatureAccess).
+  const permissionOptions = allPermissionOptions.filter((option) =>
+    hasPlanAccessToFeature(tenantPlan, option.key),
+  );
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
   const [isAddingMember, setIsAddingMember] = useState(false);
 
@@ -118,6 +129,7 @@ export default function TeamPage() {
       setTeam(payload.members);
       setTenantSlug(payload.tenantSlug ?? "");
       setCanManage(payload.canManage);
+      setTenantPlan(payload.plan ?? TenantPlan.BASIC);
       setPermissionDraft(
         payload.members.reduce<Record<number, DashboardFeatureKey[]>>(
           (acc, member) => {

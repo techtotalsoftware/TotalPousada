@@ -6,6 +6,7 @@ import {
   hasFeatureAccess,
 } from "@/lib/tenant-session";
 import {
+  hasPlanAccessToFeature,
   resolveDashboardPermissionsForRole,
   sanitizeDashboardPermissions,
   type DashboardFeatureKey,
@@ -134,6 +135,7 @@ export async function GET() {
   return NextResponse.json({
     canManage: session.role === "admin",
     tenantSlug: tenant?.slug ?? "",
+    plan: session.plan,
     members: team,
   });
 }
@@ -148,6 +150,13 @@ export async function POST(request: Request) {
   if (session.role !== "admin") {
     return NextResponse.json(
       { message: "Somente gestores podem cadastrar colaboradores." },
+      { status: 403 },
+    );
+  }
+
+  if (!hasFeatureAccess(session, "team")) {
+    return NextResponse.json(
+      { message: "Sem permissao para esta acao." },
       { status: 403 },
     );
   }
@@ -220,7 +229,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const permissions = sanitizeDashboardPermissions(body.permissions ?? []);
+  const permissions = sanitizeDashboardPermissions(body.permissions ?? []).filter(
+    (feature) => hasPlanAccessToFeature(session.plan, feature),
+  );
   const passwordHash = await bcrypt.hash(body.password, 10);
 
   try {

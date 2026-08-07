@@ -1,6 +1,7 @@
 import { getAuthenticatedSession } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import {
+  hasPlanAccessToFeature,
   parseStoredDashboardPermissions,
   resolveDashboardPermissionsForRole,
   type DashboardFeatureKey,
@@ -84,6 +85,11 @@ export function hasFeatureAccess(
   session: VerifiedTenantSession,
   feature: DashboardFeatureKey,
 ) {
+  // O plano é um teto por pousada: nem admin ultrapassa ele.
+  if (!hasPlanAccessToFeature(session.plan, feature)) {
+    return false;
+  }
+
   if (session.role === "admin") {
     return true;
   }
