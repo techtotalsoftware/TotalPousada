@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import type { TenantPlan } from '@/models/Tenant';
+import type { TenantPlan } from '@/lib/plan-enum';
 import type { DashboardFeatureKey, UserAccessRole } from '@/lib/dashboard-access';
 
 const encoder = new TextEncoder();

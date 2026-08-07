@@ -9,7 +9,7 @@ export default async function DashboardIndexPage() {
     redirect('/');
   }
 
-  const navItems = getVisibleDashboardNavItems(session.plan, session.role, session.permissions);
+  const navItems = getVisibleDashboardNavItems(session.plan as unknown as "basic" | "pro" | "premium", session.role, session.permissions);
 
   if (navItems.length > 0) {
     redirect(navItems[0].href);

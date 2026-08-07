@@ -1,4 +1,3 @@
-import { prisma } from "./db";
 import { TenantPlan } from "./plan-enum";
 import { Feature, ensureFeatureAccess } from "./feature-access";
 
@@ -43,19 +42,7 @@ export async function createTeamMember(
     throw new Error("Email válido é obrigatï¿½rio");
   }
 
-  // Cria o membro da equipe
-  const teamMember = await prisma.teamMember.create({
-    data: {
-      name: data.name,
-      role: data.role,
-      email: data.email,
-      permissions: data.permissions,
-      tenantId: tenant.id,
-      createdBy: context.user.id,
-    },
-  });
-
-  return teamMember;
+  throw new Error("Este módulo de equipe está desativado no fluxo atual do app. Use as rotas do backend Sequelize.");
 }
 
 /**
@@ -67,14 +54,7 @@ export async function listTeamMembers(context: Context) {
   // VALIDAÇªÍıO: Team management é Enterprise
   ensureFeatureAccess(tenant.plan as TenantPlan, Feature.TEAM_MANAGEMENT);
 
-  const teamMembers = await prisma.teamMember.findMany({
-    where: {
-      tenantId: tenant.id,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  return teamMembers;
+  throw new Error("Este módulo de equipe está desativado no fluxo atual do app. Use as rotas do backend Sequelize.");
 }
 
 /**
@@ -89,23 +69,7 @@ export async function deleteTeamMember(
   // VALIDAÇªÍıO: Team management é Enterprise
   ensureFeatureAccess(tenant.plan as TenantPlan, Feature.TEAM_MANAGEMENT);
 
-  // Verifica se o membro pertence ao tenant
-  const teamMember = await prisma.teamMember.findFirst({
-    where: {
-      id: teamMemberId,
-      tenantId: tenant.id,
-    },
-  });
-
-  if (!teamMember) {
-    throw new Error("Membro da equipe não encontrado");
-  }
-
-  await prisma.teamMember.delete({
-    where: { id: teamMemberId },
-  });
-
-  return { success: true };
+  throw new Error("Este módulo de equipe está desativado no fluxo atual do app. Use as rotas do backend Sequelize.");
 }
 
 /**
@@ -121,32 +85,5 @@ export async function updateTeamMember(
   // VALIDAÇªÍıO: Team management é Enterprise
   ensureFeatureAccess(tenant.plan as TenantPlan, Feature.TEAM_MANAGEMENT);
 
-  // Verifica se o membro pertence ao tenant
-  const existingMember = await prisma.teamMember.findFirst({
-    where: {
-      id: teamMemberId,
-      tenantId: tenant.id,
-    },
-  });
-
-  if (!existingMember) {
-    throw new Error("Membro da equipe não encontrado");
-  }
-
-  // Valida email se estiver sendo atualizado
-  if (data.email && !data.email.includes("@")) {
-    throw new Error("Email válido é obrigatï¿½rio");
-  }
-
-  const teamMember = await prisma.teamMember.update({
-    where: { id: teamMemberId },
-    data: {
-      ...(data.name && { name: data.name }),
-      ...(data.role && { role: data.role }),
-      ...(data.email && { email: data.email }),
-      ...(data.permissions && { permissions: data.permissions }),
-    },
-  });
-
-  return teamMember;
+  throw new Error("Este módulo de equipe está desativado no fluxo atual do app. Use as rotas do backend Sequelize.");
 }

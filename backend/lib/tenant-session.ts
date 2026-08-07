@@ -6,7 +6,7 @@ import {
   type DashboardFeatureKey,
   type UserAccessRole,
 } from '@/lib/dashboard-access';
-import type { TenantPlan } from '@/models/Tenant';
+import type { TenantPlan } from '@/lib/plan-enum';
 
 export type VerifiedTenantSession = {
   userId: number;
@@ -72,7 +72,7 @@ export async function getVerifiedTenantSession(): Promise<VerifiedTenantSession 
 
   return {
     userId: user.id,
-    tenantId: tenant.id,
+    tenantId: Number(tenant.id),
     tenantName: tenant.name,
     plan: tenant.plan,
     role: user.role,

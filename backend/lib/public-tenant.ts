@@ -16,7 +16,7 @@ export async function resolvePublicTenantId(request: Request): Promise<number | 
   if (fromSlug) {
     const { Tenant } = await getDb();
     const tenant = await Tenant.findOne({ where: { slug: fromSlug, status: 'active' } });
-    return tenant?.id ?? null;
+    return typeof tenant?.id === 'number' ? tenant.id : null;
   }
 
   const fromQuery = searchParams.get('tenantId');

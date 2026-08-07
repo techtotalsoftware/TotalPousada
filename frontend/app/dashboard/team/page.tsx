@@ -5,16 +5,14 @@ import { Clock3, Plus, ShieldCheck } from "lucide-react";
 import type { DashboardFeatureKey } from "@/lib/dashboard-access";
 import { DEFAULT_STAFF_FEATURES } from "@/lib/dashboard-access";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import {
-  TEAM_PERMISSION_OPTIONS,
-  TEAM_ROLE_OPTIONS,
-  TEAM_SHIFT_OPTIONS,
-  type TeamEmploymentStatus,
-  type TeamShift,
-  type TeamShiftStatus,
-} from "@/lib/team";
+
+const TEAM_ROLE_OPTIONS = ["Recepcao", "Limpeza", "Manutencao", "Gestao"] as const;
+const TEAM_SHIFT_OPTIONS = ["Manha", "Tarde", "Noite"] as const;
 
 type TeamRole = (typeof TEAM_ROLE_OPTIONS)[number];
+type TeamEmploymentStatus = "active" | "inactive";
+type TeamShift = "Manha" | "Tarde" | "Noite";
+type TeamShiftStatus = "off" | "on_shift";
 
 type TeamMember = {
   id: number;
@@ -82,6 +80,16 @@ export default function TeamPage() {
   const [permissionDraft, setPermissionDraft] = useState<
     Record<number, DashboardFeatureKey[]>
   >({});
+  const permissionOptions: Array<{ key: DashboardFeatureKey; label: string }> = [
+    { key: "rooms", label: "Quartos" },
+    { key: "reservations", label: "Reservas" },
+    { key: "gallery", label: "Galeria" },
+    { key: "finance", label: "Financeiro" },
+    { key: "team", label: "Equipe" },
+    { key: "promotions", label: "Promoções" },
+    { key: "calendar", label: "Calendário" },
+    { key: "guests", label: "Hóspedes" },
+  ];
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
   const [isAddingMember, setIsAddingMember] = useState(false);
 
@@ -145,9 +153,9 @@ export default function TeamPage() {
 
   const summary = useMemo(() => {
     return {
-      active: team.filter((member) => member.employmentStatus === "ativo")
+      active: team.filter((member) => member.employmentStatus === "active")
         .length,
-      onShift: team.filter((member) => member.shiftStatus === "em_turno")
+      onShift: team.filter((member) => member.shiftStatus === "on_shift")
         .length,
     };
   }, [team]);
@@ -364,7 +372,7 @@ export default function TeamPage() {
         <article className="rounded-[24px] border border-white/10 bg-slate-900/80 p-5 text-white">
           <p className="text-sm text-slate-400">Permissoes configuraveis</p>
           <p className="mt-2 text-3xl font-semibold">
-            {TEAM_PERMISSION_OPTIONS.length}
+            {permissionOptions.length}
           </p>
         </article>
       </section>
@@ -455,24 +463,24 @@ export default function TeamPage() {
                       <span
                         className={[
                           "inline-flex items-center rounded-full border px-2.5 py-1",
-                          member.employmentStatus === "ativo"
+                          member.employmentStatus === "active"
                             ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-300"
                             : "border-slate-500/40 bg-slate-700/30 text-slate-300",
                         ].join(" ")}
                       >
-                        {member.employmentStatus === "ativo"
+                        {member.employmentStatus === "active"
                           ? "Ativo"
                           : "Inativo"}
                       </span>
                       <span
                         className={[
                           "inline-flex items-center rounded-full border px-2.5 py-1",
-                          member.shiftStatus === "em_turno"
+                          member.shiftStatus === "on_shift"
                             ? "border-sky-400/30 bg-sky-500/10 text-sky-200"
                             : "border-slate-500/40 bg-slate-700/30 text-slate-300",
                         ].join(" ")}
                       >
-                        {member.shiftStatus === "em_turno"
+                        {member.shiftStatus === "on_shift"
                           ? "Em turno"
                           : "Fora de turno"}
                       </span>
@@ -502,12 +510,12 @@ export default function TeamPage() {
                       }
                       disabled={
                         !canManage ||
-                        member.employmentStatus !== "ativo" ||
+                        member.employmentStatus !== "active" ||
                         busyMemberId === member.id
                       }
                       className="rounded-xl border border-sky-400/30 bg-sky-500/10 px-4 py-2 text-xs font-medium text-sky-200 transition-all duration-200 hover:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-35"
                     >
-                      {member.shiftStatus === "fora"
+                      {member.shiftStatus === "off"
                         ? "Iniciar turno"
                         : "Encerrar turno"}
                     </button>
@@ -523,7 +531,7 @@ export default function TeamPage() {
                       }
                       className="rounded-xl border border-white/15 bg-slate-800/80 px-4 py-2 text-xs font-medium text-slate-200 transition-all duration-200 hover:bg-slate-700/80 disabled:cursor-not-allowed disabled:opacity-35"
                     >
-                      {member.employmentStatus === "ativo"
+                      {member.employmentStatus === "active"
                         ? "Inativar colaborador"
                         : "Reativar colaborador"}
                     </button>
@@ -548,7 +556,7 @@ export default function TeamPage() {
                     </p>
 
                     <div className="grid gap-2.5 md:grid-cols-2">
-                      {TEAM_PERMISSION_OPTIONS.map((option) => {
+                      {permissionOptions.map((option) => {
                         const checked = (
                           permissionDraft[member.id] ?? []
                         ).includes(option.key);
@@ -723,7 +731,7 @@ export default function TeamPage() {
                   Permissões de acesso
                 </p>
                 <div className="grid gap-2.5 md:grid-cols-2">
-                  {TEAM_PERMISSION_OPTIONS.map((option) => {
+                  {permissionOptions.map((option) => {
                     const checked = form.permissions.includes(option.key);
 
                     return (

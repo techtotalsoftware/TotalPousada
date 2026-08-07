@@ -1,23 +1,36 @@
 import { Sequelize, Model, DataTypes } from 'sequelize';
 import { TenantPlan } from '../lib/plan-enum';
 
-export type TenantModel = {
-  id: string;
+export type TenantStatus = 'active' | 'inactive' | 'suspended';
+
+export type TenantAttributes = {
+  id: number;
   name: string;
   slug: string;
   plan: TenantPlan;
-  createdAt: Date;
-  updatedAt: Date;
+  status: TenantStatus;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
-export class Tenant extends Model {
+export type TenantCreationAttributes = Omit<TenantAttributes, 'id' | 'createdAt' | 'updatedAt'> & Partial<Pick<TenantAttributes, 'id' | 'createdAt' | 'updatedAt'>>;
+
+export class Tenant extends Model<TenantAttributes, TenantCreationAttributes> {
+  declare id: string;
+  declare name: string;
+  declare slug: string;
+  declare plan: TenantPlan;
+  declare status: 'active' | 'inactive' | 'suspended';
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
+
   static initialize(sequelize: Sequelize) {
     Tenant.init(
       {
         id: {
-          type: DataTypes.STRING,
+          type: DataTypes.INTEGER.UNSIGNED,
+          autoIncrement: true,
           primaryKey: true,
-          defaultValue: () => Math.random().toString(36).substr(2, 9),
         },
         name: {
           type: DataTypes.STRING,
@@ -29,9 +42,14 @@ export class Tenant extends Model {
           unique: true,
         },
         plan: {
-          type: DataTypes.ENUM('Basic', 'Premium', 'Enterprise'),
+          type: DataTypes.ENUM(TenantPlan.BASIC, TenantPlan.PREMIUM, TenantPlan.ENTERPRISE),
           allowNull: false,
-          defaultValue: 'Basic',
+          defaultValue: TenantPlan.BASIC,
+        },
+        status: {
+          type: DataTypes.ENUM('active', 'inactive', 'suspended'),
+          allowNull: false,
+          defaultValue: 'active',
         },
         createdAt: {
           type: DataTypes.DATE,
@@ -51,11 +69,9 @@ export class Tenant extends Model {
         updatedAt: 'updatedAt',
         hooks: {
           beforeValidate: (tenant) => {
-            const validPlans = ['Basic', 'Premium', 'Enterprise'];
-            if (tenant.plan && !validPlans.includes(tenant.plan)) {
-              throw new Error(
-                `Plano inváıılido: ${tenant.plan}. Valores aceitos: ${validPlans.join(', ')}`
-              );
+            const validPlans = Object.values(TenantPlan);
+            if (tenant.plan && !validPlans.includes(tenant.plan as TenantPlan)) {
+              throw new Error(`Plano inválido: ${tenant.plan}. Valores aceitos: ${validPlans.join(', ')}`);
             }
           },
         },

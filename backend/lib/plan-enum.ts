@@ -9,6 +9,23 @@ export enum TenantPlan {
   ENTERPRISE = "Enterprise",
 }
 
+export function normalizeTenantPlan(plan: string | null | undefined): TenantPlan | null {
+  const normalized = plan?.trim().toLowerCase();
+
+  switch (normalized) {
+    case "basic":
+    case "starter":
+      return TenantPlan.BASIC;
+    case "pro":
+    case "premium":
+      return TenantPlan.PREMIUM;
+    case "enterprise":
+      return TenantPlan.ENTERPRISE;
+    default:
+      return null;
+  }
+}
+
 /**
  * Mapping de planos para seus níveis de acesso
  * Nmeros maiores indicam mais permissÃµes
@@ -37,6 +54,6 @@ export function hasPlanAccess(
  * @param plan - String a ser validada
  * @returns boolean - true se é um plano váışido
  */
-export function isValidPlan(plan: string): plan is TenantPlan {
-  return Object.values(TenantPlan).includes(plan as TenantPlan);
+export function isValidPlan(plan: string | null | undefined): plan is TenantPlan {
+  return normalizeTenantPlan(plan) !== null;
 }

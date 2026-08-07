@@ -1,77 +1,67 @@
-import { prisma } from "../lib/db";
 import { TenantPlan } from "../lib/plan-enum";
 import { Feature, ensureFeatureAccess } from "../lib/feature-access";
+import { getDb } from "../lib/db";
 
 type CreateExpenseInput = {
   description: string;
   amount: number;
   category: string;
-  date: Date;
-  paymentMethod: string;
+  date: Date | string;
+  paymentMethod?: string;
 };
 
 type Context = {
   tenant: {
-    id: string;
+    id: string | number;
     plan: string;
   };
   user: {
-    id: string;
+    id: string | number;
   };
 };
 
+function normalizeTenantId(value: string | number) {
+  return typeof value === "number" ? value : Number(value);
+}
+
 /**
- * Cria uma nova despesa
- * 
- * IMPORTANTE: Esta função só pode ser acessada por tenants com plano Premium ou Enterprise
- * A validaåııo é feita no backend para garantir que não há como burlar pelo frontend
+ * Cria uma nova despesa via Sequelize.
  */
-export async function createExpense(
-  data: CreateExpenseInput,
-  context: Context
-) {
+export async function createExpense(data: CreateExpenseInput, context: Context) {
   const { tenant } = context;
 
-  // VALIDAÇªÍıO DE PLANO - Finance é feature Premium
-  // Isso impede que tenants Basic acessem esta funcionalidade
-  // mesmo que tentem chamar a API diretamente
   try {
     ensureFeatureAccess(tenant.plan as TenantPlan, Feature.FINANCE);
   } catch (error) {
-    // Log da tentativa de acesso não autorizado
     console.warn(
-      `[SECURITY] Tenant ${tenant.id} tentou acessar feature ${Feature.FINANCE} sem permissåııo. Plano: ${tenant.plan}`
+      `[SECURITY] Tenant ${tenant.id} tentou acessar feature ${Feature.FINANCE} sem permissão. Plano: ${tenant.plan}`,
     );
     throw error;
   }
 
-  // Validaåııes adicionais
   if (!data.description || data.description.trim().length === 0) {
-    throw new Error("Descriåııo é obrigatï¿½ria");
+    throw new Error("Descrição é obrigatória");
   }
 
   if (data.amount <= 0) {
     throw new Error("Valor deve ser maior que zero");
   }
 
-  // Cria a despesa
-  const expense = await prisma.expense.create({
-    data: {
-      description: data.description,
-      amount: data.amount,
-      category: data.category,
-      date: data.date,
-      paymentMethod: data.paymentMethod,
-      tenantId: tenant.id,
-      userId: context.user.id,
-    },
+  const { Expense } = await getDb();
+  const expense = await Expense.create({
+    createdByUserId: normalizeTenantId(context.user.id),
+    description: data.description.trim(),
+    amount: Number(data.amount),
+    date: data.date instanceof Date ? data.date.toISOString().slice(0, 10) : String(data.date),
+    category: data.category as any,
+    tenantId: normalizeTenantId(tenant.id),
   });
 
   return expense;
 }
 
 /**
- * Lista despesas do tenant
+ * Lista despesas do tenant usando Sequelize.
  */
 export async function listExpenses(
   filters: {
@@ -79,62 +69,48 @@ export async function listExpenses(
     endDate?: Date;
     category?: string;
   },
-  context: Context
+  context: Context,
 ) {
   const { tenant } = context;
 
-  // VALIDAÇªÍıO DE PLANO
   ensureFeatureAccess(tenant.plan as TenantPlan, Feature.FINANCE);
 
-  const where: any = {
-    tenantId: tenant.id,
+  const { Expense } = await getDb();
+  const where: Record<string, unknown> = {
+    tenantId: normalizeTenantId(tenant.id),
   };
 
   if (filters.startDate && filters.endDate) {
     where.date = {
-      gte: filters.startDate,
-      lte: filters.endDate,
-    };
+      $gte: filters.startDate.toISOString().slice(0, 10),
+      $lte: filters.endDate.toISOString().slice(0, 10),
+    } as any;
   }
 
   if (filters.category) {
     where.category = filters.category;
   }
 
-  const expenses = await prisma.expense.findMany({
+  return Expense.findAll({
     where,
-    orderBy: { date: "desc" },
+    order: [["date", "DESC"], ["id", "DESC"]],
   });
-
-  return expenses;
 }
 
 /**
- * Deleta uma despesa
+ * Deleta uma despesa usando Sequelize.
  */
-export async function deleteExpense(
-  expenseId: string,
-  context: Context
-) {
+export async function deleteExpense(expenseId: string, context: Context) {
   const { tenant } = context;
 
-  // VALIDAÇªÍıO DE PLANO
   ensureFeatureAccess(tenant.plan as TenantPlan, Feature.FINANCE);
 
-  // Verifica se a despesa pertence ao tenant
-  const expense = await prisma.expense.findFirst({
+  const { Expense } = await getDb();
+  await Expense.destroy({
     where: {
-      id: expenseId,
-      tenantId: tenant.id,
+      id: Number(expenseId),
+      tenantId: normalizeTenantId(tenant.id),
     },
-  });
-
-  if (!expense) {
-    throw new Error("Despesa não encontrada");
-  }
-
-  await prisma.expense.delete({
-    where: { id: expenseId },
   });
 
   return { success: true };

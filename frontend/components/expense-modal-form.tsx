@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Plus, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition, type FormEvent } from 'react';
-import { createExpenseAction } from '@/actions/expense';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 import type { ExpenseCategory } from '@/types/domain';
 
@@ -43,12 +42,25 @@ export function ExpenseModalForm() {
 
     startTransition(async () => {
       try {
-        await createExpenseAction({
-          description: form.description,
-          date: form.date,
-          amount,
-          category: form.category,
+        const response = await fetch('/api/tenant/expenses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            expense: {
+              description: form.description,
+              date: form.date,
+              amount,
+              category: form.category,
+            },
+          }),
         });
+
+        const payload = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          throw new Error(payload?.message || 'Falha ao salvar despesa.');
+        }
+
         setForm(initialState);
         setIsOpen(false);
         router.refresh();

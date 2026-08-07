@@ -11,15 +11,11 @@ import {
   type DashboardFeatureKey,
 } from "@/lib/dashboard-access";
 import { getDb } from "@/lib/db";
-import {
-  employmentStatusFromDb,
-  shiftLabelFromDb,
-  shiftLabelToDb,
-  shiftStatusFromDb,
-  TEAM_ROLE_OPTIONS,
-  TEAM_SHIFT_OPTIONS,
-  type TeamShift,
-} from "@/lib/team";
+import { TenantPlan } from "@/lib/plan-enum";
+
+const TEAM_ROLE_OPTIONS = ["Recepcao", "Limpeza", "Manutencao", "Gestao"] as const;
+const TEAM_SHIFT_OPTIONS = ["Manha", "Tarde", "Noite"] as const;
+type TeamShift = (typeof TEAM_SHIFT_OPTIONS)[number];
 
 type TeamCreatePayload = {
   name?: string;
@@ -59,7 +55,7 @@ function normalizeUsername(username: string) {
 async function ensureTenantContext(
   tenantId: number,
   tenantName: string,
-  plan: "basic" | "pro" | "premium",
+  plan: TenantPlan,
 ) {
   const { Tenant } = await getDb();
 
@@ -68,6 +64,7 @@ async function ensureTenantContext(
     defaults: {
       id: tenantId,
       name: tenantName,
+      slug: `tenant-${tenantId}`,
       plan,
       status: "active",
     },
@@ -119,9 +116,9 @@ export async function GET() {
       email: user.email,
       phone: user.phone ?? "Nao informado",
       role: user.teamRole,
-      shift: shiftLabelFromDb(user.shiftLabel),
-      employmentStatus: employmentStatusFromDb(user.employmentStatus),
-      shiftStatus: shiftStatusFromDb(user.shiftStatus),
+      shift: user.shiftLabel,
+      employmentStatus: user.employmentStatus,
+      shiftStatus: user.shiftStatus,
       lastPunch: user.lastPunchAt ? user.lastPunchAt.toISOString() : null,
       permissions,
       isCurrentUser: user.id === session.userId,
@@ -230,7 +227,7 @@ export async function POST(request: Request) {
       tenantId: session.tenantId,
       phone: body.phone?.trim() || null,
       teamRole,
-      shiftLabel: shiftLabelToDb(body.shift),
+      shiftLabel: body.shift === "Manha" ? "morning" : body.shift === "Tarde" ? "afternoon" : "night",
       shiftStatus: "off",
       employmentStatus: "active",
       dashboardPermissions: JSON.stringify(permissions),
@@ -260,7 +257,7 @@ export async function POST(request: Request) {
           tenantId: session.tenantId,
           phone: body.phone?.trim() || null,
           teamRole: "Recepcao",
-          shiftLabel: shiftLabelToDb(body.shift),
+          shiftLabel: body.shift === "Manha" ? "morning" : body.shift === "Tarde" ? "afternoon" : "night",
           shiftStatus: "off",
           employmentStatus: "active",
           dashboardPermissions: JSON.stringify(permissions),

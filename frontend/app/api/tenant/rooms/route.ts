@@ -173,8 +173,10 @@ export async function POST(request: Request) {
     await Tenant.findOrCreate({
       where: { id: tenantId },
       defaults: {
+        id: tenantId,
         name: session?.tenantName ?? `Tenant ${tenantId}`,
-        plan: session?.plan ?? "basic",
+        slug: `tenant-${tenantId}`,
+        plan: session?.plan ?? "Basic",
         status: "active",
       },
     });

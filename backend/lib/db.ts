@@ -109,7 +109,7 @@ async function ensureTenantSlugColumn(models: DbModels) {
   // a partir do nome, para que as rotas públicas possam identificá-los sem
   // depender do id numérico interno.
   const tenantsWithoutSlug = await models.Tenant.findAll({
-    where: { slug: null },
+    where: { slug: null as unknown as string },
   });
 
   for (const tenant of tenantsWithoutSlug) {
