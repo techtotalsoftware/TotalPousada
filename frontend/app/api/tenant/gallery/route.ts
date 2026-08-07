@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { getVerifiedTenantSession, hasFeatureAccess } from "@/lib/tenant-session";
+import {
+  getVerifiedTenantSession,
+  hasFeatureAccess,
+} from "@/lib/tenant-session";
 import { getGalleryPhotos } from "@/services/tenantService";
 
 const MAX_PHOTOS_PER_TENANT = 60;
@@ -24,7 +27,10 @@ export async function GET() {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
     if (!hasFeatureAccess(session, "gallery")) {
-      return NextResponse.json({ error: "Sem permissão para esta ação." }, { status: 403 });
+      return NextResponse.json(
+        { error: "Sem permissão para esta ação." },
+        { status: 403 },
+      );
     }
 
     const photos = await getGalleryPhotos(session.tenantId);
@@ -42,15 +48,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
     if (!hasFeatureAccess(session, "gallery")) {
-      return NextResponse.json({ error: "Sem permissão para esta ação." }, { status: 403 });
+      return NextResponse.json(
+        { error: "Sem permissão para esta ação." },
+        { status: 403 },
+      );
     }
 
     const body = await request.json();
     const urls = sanitizeUrls(body.urls ?? body.url);
-    const caption = typeof body.caption === "string" ? body.caption.trim() || null : null;
+    const caption =
+      typeof body.caption === "string" ? body.caption.trim() || null : null;
 
     if (urls.length === 0) {
-      return NextResponse.json({ error: "Informe ao menos uma URL de foto" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Informe ao menos uma URL de foto" },
+        { status: 400 },
+      );
     }
 
     const { PropertyPhoto, Tenant } = await getDb();

@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { getVerifiedTenantSession, hasFeatureAccess } from "@/lib/tenant-session";
+import {
+  getVerifiedTenantSession,
+  hasFeatureAccess,
+} from "@/lib/tenant-session";
 import { getRooms } from "@/services/tenantService";
 import { toPublicUploadUrl } from "@/lib/uploads";
-import { parseRoomPolicyArray, parseMaybeNumber, type RoomClosurePeriod, type RoomSeasonalRate } from "@/lib/room-policies";
+import {
+  parseRoomPolicyArray,
+  parseMaybeNumber,
+  type RoomClosurePeriod,
+  type RoomSeasonalRate,
+} from "@/lib/room-policies";
 import { BED_TYPES, type BedType, type RoomBed } from "@/types/domain";
 
 function sanitizeStringArray(input: unknown) {
@@ -48,11 +56,20 @@ function sanitizeStringArray(input: unknown) {
 
 function sanitizeSeasonalRates(input: unknown): RoomSeasonalRate[] {
   return parseRoomPolicyArray(input, (item) => {
-    const startMonthDay = String(item.startMonthDay ?? item.start_month_day ?? "").trim();
-    const endMonthDay = String(item.endMonthDay ?? item.end_month_day ?? "").trim();
+    const startMonthDay = String(
+      item.startMonthDay ?? item.start_month_day ?? "",
+    ).trim();
+    const endMonthDay = String(
+      item.endMonthDay ?? item.end_month_day ?? "",
+    ).trim();
     const price = Number(item.price ?? item.rate ?? item.value);
 
-    if (!startMonthDay || !endMonthDay || !Number.isFinite(price) || price < 0) {
+    if (
+      !startMonthDay ||
+      !endMonthDay ||
+      !Number.isFinite(price) ||
+      price < 0
+    ) {
       return null;
     }
 
@@ -61,7 +78,9 @@ function sanitizeSeasonalRates(input: unknown): RoomSeasonalRate[] {
       startMonthDay,
       endMonthDay,
       price,
-      minStayNights: parseMaybeNumber(item.minStayNights ?? item.min_stay_nights),
+      minStayNights: parseMaybeNumber(
+        item.minStayNights ?? item.min_stay_nights,
+      ),
       minStayDays: parseMaybeNumber(item.minStayDays ?? item.min_stay_days),
     };
   });
@@ -91,7 +110,11 @@ function sanitizeBeds(input: unknown): RoomBed[] {
     const type = String(item.type ?? "").trim() as BedType;
     const quantity = Number(item.quantity);
 
-    if (!BED_TYPES.includes(type) || !Number.isInteger(quantity) || quantity < 1) {
+    if (
+      !BED_TYPES.includes(type) ||
+      !Number.isInteger(quantity) ||
+      quantity < 1
+    ) {
       return null;
     }
 
@@ -106,7 +129,10 @@ export async function GET() {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
     if (!hasFeatureAccess(session, "rooms")) {
-      return NextResponse.json({ error: "Sem permissão para esta ação." }, { status: 403 });
+      return NextResponse.json(
+        { error: "Sem permissão para esta ação." },
+        { status: 403 },
+      );
     }
     const tenantId = session.tenantId;
     const rooms = await getRooms(tenantId);
@@ -135,7 +161,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
     if (!hasFeatureAccess(session, "rooms")) {
-      return NextResponse.json({ error: "Sem permissão para esta ação." }, { status: 403 });
+      return NextResponse.json(
+        { error: "Sem permissão para esta ação." },
+        { status: 403 },
+      );
     }
     const tenantId = session.tenantId;
     const body = await request.json();
@@ -153,7 +182,10 @@ export async function POST(request: Request) {
     const beds = sanitizeBeds(body.beds);
 
     if (!name) {
-      return NextResponse.json({ error: "Nome do quarto é obrigatório" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Nome do quarto é obrigatório" },
+        { status: 400 },
+      );
     }
 
     if (!Number.isFinite(price) || price < 0) {
@@ -161,11 +193,17 @@ export async function POST(request: Request) {
     }
 
     if (!Number.isInteger(quantity) || quantity < 1) {
-      return NextResponse.json({ error: "Quantidade deve ser um número inteiro maior que zero" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Quantidade deve ser um número inteiro maior que zero" },
+        { status: 400 },
+      );
     }
 
     if (!Number.isInteger(maxGuests) || maxGuests < 1) {
-      return NextResponse.json({ error: "Capacidade deve ser um número inteiro maior que zero" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Capacidade deve ser um número inteiro maior que zero" },
+        { status: 400 },
+      );
     }
 
     const { Room, Tenant } = await getDb();
@@ -198,8 +236,10 @@ export async function POST(request: Request) {
       status: "active",
       amenities: amenities.length > 0 ? JSON.stringify(amenities) : null,
       photoUrls: photoUrls.length > 0 ? JSON.stringify(photoUrls) : null,
-      seasonalRates: seasonalRates.length > 0 ? JSON.stringify(seasonalRates) : null,
-      closurePeriods: closurePeriods.length > 0 ? JSON.stringify(closurePeriods) : null,
+      seasonalRates:
+        seasonalRates.length > 0 ? JSON.stringify(seasonalRates) : null,
+      closurePeriods:
+        closurePeriods.length > 0 ? JSON.stringify(closurePeriods) : null,
       beds: beds.length > 0 ? JSON.stringify(beds) : null,
     });
 

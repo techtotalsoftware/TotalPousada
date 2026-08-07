@@ -13,7 +13,12 @@ import {
 import { getDb } from "@/lib/db";
 import { TenantPlan } from "@/lib/plan-enum";
 
-const TEAM_ROLE_OPTIONS = ["Recepcao", "Limpeza", "Manutencao", "Gestao"] as const;
+const TEAM_ROLE_OPTIONS = [
+  "Recepcao",
+  "Limpeza",
+  "Manutencao",
+  "Gestao",
+] as const;
 const TEAM_SHIFT_OPTIONS = ["Manha", "Tarde", "Noite"] as const;
 type TeamShift = (typeof TEAM_SHIFT_OPTIONS)[number];
 
@@ -227,7 +232,12 @@ export async function POST(request: Request) {
       tenantId: session.tenantId,
       phone: body.phone?.trim() || null,
       teamRole,
-      shiftLabel: body.shift === "Manha" ? "morning" : body.shift === "Tarde" ? "afternoon" : "night",
+      shiftLabel:
+        body.shift === "Manha"
+          ? "morning"
+          : body.shift === "Tarde"
+            ? "afternoon"
+            : "night",
       shiftStatus: "off",
       employmentStatus: "active",
       dashboardPermissions: JSON.stringify(permissions),
@@ -257,7 +267,12 @@ export async function POST(request: Request) {
           tenantId: session.tenantId,
           phone: body.phone?.trim() || null,
           teamRole: "Recepcao",
-          shiftLabel: body.shift === "Manha" ? "morning" : body.shift === "Tarde" ? "afternoon" : "night",
+          shiftLabel:
+            body.shift === "Manha"
+              ? "morning"
+              : body.shift === "Tarde"
+                ? "afternoon"
+                : "night",
           shiftStatus: "off",
           employmentStatus: "active",
           dashboardPermissions: JSON.stringify(permissions),

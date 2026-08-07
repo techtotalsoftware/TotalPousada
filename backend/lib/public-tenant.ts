@@ -1,4 +1,4 @@
-import { getDb } from '@/lib/db';
+import { getDb } from "@/lib/db";
 
 /**
  * Resolve o tenant usado pelas rotas públicas (`/api/public/**`, consumidas
@@ -9,17 +9,21 @@ import { getDb } from '@/lib/db';
  * hardcoded), o que quebrava a criação de reserva sempre que o tenant real
  * não era o de id 1.
  */
-export async function resolvePublicTenantId(request: Request): Promise<number | null> {
+export async function resolvePublicTenantId(
+  request: Request,
+): Promise<number | null> {
   const { searchParams } = new URL(request.url);
-  const fromSlug = searchParams.get('slug');
+  const fromSlug = searchParams.get("slug");
 
   if (fromSlug) {
     const { Tenant } = await getDb();
-    const tenant = await Tenant.findOne({ where: { slug: fromSlug, status: 'active' } });
-    return typeof tenant?.id === 'number' ? tenant.id : null;
+    const tenant = await Tenant.findOne({
+      where: { slug: fromSlug, status: "active" },
+    });
+    return typeof tenant?.id === "number" ? tenant.id : null;
   }
 
-  const fromQuery = searchParams.get('tenantId');
+  const fromQuery = searchParams.get("tenantId");
   const fromEnv = process.env.PUBLIC_ROOMS_TENANT_ID;
 
   const parsedQuery = fromQuery ? Number(fromQuery) : NaN;
@@ -37,10 +41,10 @@ export async function resolvePublicTenantId(request: Request): Promise<number | 
   // 2+ pousadas, novas integrações devem sempre passar `?slug=`.
   const { Room } = await getDb();
   const firstRoom = await Room.findOne({
-    attributes: ['tenantId'],
+    attributes: ["tenantId"],
     order: [
-      ['tenantId', 'ASC'],
-      ['id', 'ASC'],
+      ["tenantId", "ASC"],
+      ["id", "ASC"],
     ],
   });
 

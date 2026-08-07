@@ -13,7 +13,7 @@ export default async function DashboardLayout({
   const session = await getAuthenticatedSession();
 
   if (!session) {
-    redirect('/');
+    redirect("/");
   }
 
   const navItems = getVisibleDashboardNavItems(
@@ -30,9 +30,7 @@ export default async function DashboardLayout({
           <div className="flex items-center justify-end">
             <LogoutButton />
           </div>
-          <section className="min-w-0 space-y-4">
-            {children}
-          </section>
+          <section className="min-w-0 space-y-4">{children}</section>
         </div>
       </div>
     </main>

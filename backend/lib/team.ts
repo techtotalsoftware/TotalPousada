@@ -20,13 +20,13 @@ type Context = {
 
 /**
  * Cria um novo membro de equipe
- * 
+ *
  * IMPORTANTE: Esta função só pode ser acessada por tenants com plano Enterprise
  * Team management é uma feature exclusiva do plano Enterprise
  */
 export async function createTeamMember(
   data: CreateTeamInput,
-  context: Context
+  context: Context,
 ) {
   const { tenant } = context;
 
@@ -42,7 +42,9 @@ export async function createTeamMember(
     throw new Error("Email válido é obrigatï¿½rio");
   }
 
-  throw new Error("Este módulo de equipe está desativado no fluxo atual do app. Use as rotas do backend Sequelize.");
+  throw new Error(
+    "Este módulo de equipe está desativado no fluxo atual do app. Use as rotas do backend Sequelize.",
+  );
 }
 
 /**
@@ -54,22 +56,23 @@ export async function listTeamMembers(context: Context) {
   // VALIDAÇªÍıO: Team management é Enterprise
   ensureFeatureAccess(tenant.plan as TenantPlan, Feature.TEAM_MANAGEMENT);
 
-  throw new Error("Este módulo de equipe está desativado no fluxo atual do app. Use as rotas do backend Sequelize.");
+  throw new Error(
+    "Este módulo de equipe está desativado no fluxo atual do app. Use as rotas do backend Sequelize.",
+  );
 }
 
 /**
  * Deleta um membro da equipe
  */
-export async function deleteTeamMember(
-  teamMemberId: string,
-  context: Context
-) {
+export async function deleteTeamMember(teamMemberId: string, context: Context) {
   const { tenant } = context;
 
   // VALIDAÇªÍıO: Team management é Enterprise
   ensureFeatureAccess(tenant.plan as TenantPlan, Feature.TEAM_MANAGEMENT);
 
-  throw new Error("Este módulo de equipe está desativado no fluxo atual do app. Use as rotas do backend Sequelize.");
+  throw new Error(
+    "Este módulo de equipe está desativado no fluxo atual do app. Use as rotas do backend Sequelize.",
+  );
 }
 
 /**
@@ -78,12 +81,14 @@ export async function deleteTeamMember(
 export async function updateTeamMember(
   teamMemberId: string,
   data: Partial<CreateTeamInput>,
-  context: Context
+  context: Context,
 ) {
   const { tenant } = context;
 
   // VALIDAÇªÍıO: Team management é Enterprise
   ensureFeatureAccess(tenant.plan as TenantPlan, Feature.TEAM_MANAGEMENT);
 
-  throw new Error("Este módulo de equipe está desativado no fluxo atual do app. Use as rotas do backend Sequelize.");
+  throw new Error(
+    "Este módulo de equipe está desativado no fluxo atual do app. Use as rotas do backend Sequelize.",
+  );
 }

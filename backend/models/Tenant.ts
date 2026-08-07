@@ -1,7 +1,7 @@
-import { Sequelize, Model, DataTypes } from 'sequelize';
-import { TenantPlan } from '../lib/plan-enum';
+import { Sequelize, Model, DataTypes } from "sequelize";
+import { TenantPlan } from "../lib/plan-enum";
 
-export type TenantStatus = 'active' | 'inactive' | 'suspended';
+export type TenantStatus = "active" | "inactive" | "suspended";
 
 export type TenantAttributes = {
   id: number;
@@ -13,14 +13,18 @@ export type TenantAttributes = {
   updatedAt?: Date;
 };
 
-export type TenantCreationAttributes = Omit<TenantAttributes, 'id' | 'createdAt' | 'updatedAt'> & Partial<Pick<TenantAttributes, 'id' | 'createdAt' | 'updatedAt'>>;
+export type TenantCreationAttributes = Omit<
+  TenantAttributes,
+  "id" | "createdAt" | "updatedAt"
+> &
+  Partial<Pick<TenantAttributes, "id" | "createdAt" | "updatedAt">>;
 
 export class Tenant extends Model<TenantAttributes, TenantCreationAttributes> {
   declare id: string;
   declare name: string;
   declare slug: string;
   declare plan: TenantPlan;
-  declare status: 'active' | 'inactive' | 'suspended';
+  declare status: "active" | "inactive" | "suspended";
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 
@@ -42,40 +46,49 @@ export class Tenant extends Model<TenantAttributes, TenantCreationAttributes> {
           unique: true,
         },
         plan: {
-          type: DataTypes.ENUM(TenantPlan.BASIC, TenantPlan.PREMIUM, TenantPlan.ENTERPRISE),
+          type: DataTypes.ENUM(
+            TenantPlan.BASIC,
+            TenantPlan.PREMIUM,
+            TenantPlan.ENTERPRISE,
+          ),
           allowNull: false,
           defaultValue: TenantPlan.BASIC,
         },
         status: {
-          type: DataTypes.ENUM('active', 'inactive', 'suspended'),
+          type: DataTypes.ENUM("active", "inactive", "suspended"),
           allowNull: false,
-          defaultValue: 'active',
+          defaultValue: "active",
         },
         createdAt: {
           type: DataTypes.DATE,
-          field: 'createdAt',
+          field: "createdAt",
         },
         updatedAt: {
           type: DataTypes.DATE,
-          field: 'updatedAt',
+          field: "updatedAt",
         },
       },
       {
         sequelize,
-        modelName: 'Tenant',
-        tableName: 'tenants',
+        modelName: "Tenant",
+        tableName: "tenants",
         timestamps: true,
-        createdAt: 'createdAt',
-        updatedAt: 'updatedAt',
+        createdAt: "createdAt",
+        updatedAt: "updatedAt",
         hooks: {
           beforeValidate: (tenant) => {
             const validPlans = Object.values(TenantPlan);
-            if (tenant.plan && !validPlans.includes(tenant.plan as TenantPlan)) {
-              throw new Error(`Plano inválido: ${tenant.plan}. Valores aceitos: ${validPlans.join(', ')}`);
+            if (
+              tenant.plan &&
+              !validPlans.includes(tenant.plan as TenantPlan)
+            ) {
+              throw new Error(
+                `Plano inválido: ${tenant.plan}. Valores aceitos: ${validPlans.join(", ")}`,
+              );
             }
           },
         },
-      }
+      },
     );
   }
 

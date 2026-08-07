@@ -6,7 +6,11 @@ import { TenantPlan, normalizeTenantPlan } from "@/lib/plan-enum";
 import { getDb } from "@/lib/db";
 import { slugify } from "@/lib/tenant-slug";
 
-const validPlans: TenantPlan[] = [TenantPlan.BASIC, TenantPlan.PREMIUM, TenantPlan.ENTERPRISE];
+const validPlans: TenantPlan[] = [
+  TenantPlan.BASIC,
+  TenantPlan.PREMIUM,
+  TenantPlan.ENTERPRISE,
+];
 
 type ProvisionPayload = {
   tenantName?: string;
@@ -32,7 +36,7 @@ function extractTenantSlug(email: string) {
     return match[1];
   }
 
-  const fallback = slugify(trimmed.split('@')[0] || trimmed);
+  const fallback = slugify(trimmed.split("@")[0] || trimmed);
   return fallback || null;
 }
 
@@ -46,7 +50,10 @@ export async function POST(request: Request) {
   const adminEmail = payload.adminEmail?.trim().toLowerCase();
   const adminPassword = payload.adminPassword;
   if (!tenantName || !adminEmail || !adminPassword || !payload.plan) {
-    return NextResponse.json({ message: "Payload incompleto." }, { status: 400 });
+    return NextResponse.json(
+      { message: "Payload incompleto." },
+      { status: 400 },
+    );
   }
 
   const normalizedPlan = normalizeTenantPlan(payload.plan);
@@ -56,25 +63,52 @@ export async function POST(request: Request) {
 
   const slug = extractTenantSlug(adminEmail);
   if (!slug) {
-    return NextResponse.json({ message: "adminEmail deve estar no formato usuario@slugdapousada." }, { status: 400 });
+    return NextResponse.json(
+      { message: "adminEmail deve estar no formato usuario@slugdapousada." },
+      { status: 400 },
+    );
   }
 
   const { sequelize, Tenant, User } = await getDb();
   try {
     await sequelize.transaction(async (transaction: Transaction) => {
-      const existingTenant = await Tenant.findOne({ where: { slug }, transaction });
+      const existingTenant = await Tenant.findOne({
+        where: { slug },
+        transaction,
+      });
       if (existingTenant) throw new Error("TENANT_SLUG_ALREADY_EXISTS");
 
-      const tenant = await Tenant.create({ name: tenantName, slug, plan: normalizedPlan, status: "active" }, { transaction });
+      const tenant = await Tenant.create(
+        { name: tenantName, slug, plan: normalizedPlan, status: "active" },
+        { transaction },
+      );
       const passwordHash = await bcrypt.hash(adminPassword, 12);
-      await User.create({ name: adminEmail.split("@")[0], email: adminEmail, passwordHash, role: "admin", tenantId: Number(tenant.id) }, { transaction });
+      await User.create(
+        {
+          name: adminEmail.split("@")[0],
+          email: adminEmail,
+          passwordHash,
+          role: "admin",
+          tenantId: Number(tenant.id),
+        },
+        { transaction },
+      );
     });
     return NextResponse.json({ ok: true, slug }, { status: 201 });
   } catch (error) {
     console.error("Provision webhook error:", error);
-    if (error instanceof Error && error.message === "TENANT_SLUG_ALREADY_EXISTS") {
-      return NextResponse.json({ message: "Já existe uma pousada com esse slug." }, { status: 409 });
+    if (
+      error instanceof Error &&
+      error.message === "TENANT_SLUG_ALREADY_EXISTS"
+    ) {
+      return NextResponse.json(
+        { message: "Já existe uma pousada com esse slug." },
+        { status: 409 },
+      );
     }
-    return NextResponse.json({ message: "Falha ao provisionar tenant." }, { status: 500 });
+    return NextResponse.json(
+      { message: "Falha ao provisionar tenant." },
+      { status: 500 },
+    );
   }
 }

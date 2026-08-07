@@ -1,12 +1,12 @@
-import { getAuthenticatedSession } from '@/lib/auth';
-import { getDb } from '@/lib/db';
+import { getAuthenticatedSession } from "@/lib/auth";
+import { getDb } from "@/lib/db";
 import {
   parseStoredDashboardPermissions,
   resolveDashboardPermissionsForRole,
   type DashboardFeatureKey,
   type UserAccessRole,
-} from '@/lib/dashboard-access';
-import type { TenantPlan } from '@/lib/plan-enum';
+} from "@/lib/dashboard-access";
+import type { TenantPlan } from "@/lib/plan-enum";
 
 export type VerifiedTenantSession = {
   userId: number;
@@ -48,20 +48,20 @@ export async function getVerifiedTenantSession(): Promise<VerifiedTenantSession 
   const { User, Tenant } = await getDb();
   const user = await User.findOne({
     where: { id: session.userId },
-    include: [{ model: Tenant, as: 'tenant' }],
+    include: [{ model: Tenant, as: "tenant" }],
   });
 
   if (!user) {
     return null;
   }
 
-  const tenant = user.get('tenant') as InstanceType<typeof Tenant> | undefined;
+  const tenant = user.get("tenant") as InstanceType<typeof Tenant> | undefined;
 
-  if (!tenant || tenant.status !== 'active') {
+  if (!tenant || tenant.status !== "active") {
     return null;
   }
 
-  if (user.employmentStatus === 'inactive') {
+  if (user.employmentStatus === "inactive") {
     return null;
   }
 
@@ -80,8 +80,11 @@ export async function getVerifiedTenantSession(): Promise<VerifiedTenantSession 
   };
 }
 
-export function hasFeatureAccess(session: VerifiedTenantSession, feature: DashboardFeatureKey) {
-  if (session.role === 'admin') {
+export function hasFeatureAccess(
+  session: VerifiedTenantSession,
+  feature: DashboardFeatureKey,
+) {
+  if (session.role === "admin") {
     return true;
   }
 

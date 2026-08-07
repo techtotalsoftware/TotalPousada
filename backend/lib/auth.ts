@@ -1,23 +1,29 @@
-import { cookies } from 'next/headers';
-import type { TenantPlan } from '@/lib/plan-enum';
-import type { DashboardFeatureKey, UserAccessRole } from '@/lib/dashboard-access';
+import { cookies } from "next/headers";
+import type { TenantPlan } from "@/lib/plan-enum";
+import type {
+  DashboardFeatureKey,
+  UserAccessRole,
+} from "@/lib/dashboard-access";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
 export const authConfig = {
-  cookieName: 'sancho_session',
+  cookieName: "sancho_session",
   tokenTtlSeconds: 60 * 60 * 8,
 };
 
 export function shouldUseSecureCookies(request: Request) {
-  const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
+  const forwardedProto = request.headers
+    .get("x-forwarded-proto")
+    ?.split(",")[0]
+    ?.trim();
 
   if (forwardedProto) {
-    return forwardedProto === 'https';
+    return forwardedProto === "https";
   }
 
-  return new URL(request.url).protocol === 'https:';
+  return new URL(request.url).protocol === "https:";
 }
 
 export type SessionPayload = {
@@ -34,62 +40,89 @@ export type SessionPayload = {
 function getSecret() {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error('JWT_SECRET não foi configurado.');
+    throw new Error("JWT_SECRET não foi configurado.");
   }
   return secret;
 }
 
 function base64UrlEncodeBytes(buffer: Uint8Array) {
-  return Buffer.from(buffer).toString('base64url');
+  return Buffer.from(buffer).toString("base64url");
 }
 
 function base64UrlEncodeText(input: string) {
-  return Buffer.from(input, 'utf-8').toString('base64url');
+  return Buffer.from(input, "utf-8").toString("base64url");
 }
 
 function base64UrlDecodeText(input: string) {
-  return Buffer.from(input, 'base64url').toString('utf-8');
+  return Buffer.from(input, "base64url").toString("utf-8");
 }
 
 function base64UrlDecodeBytes(input: string): Uint8Array {
-  return new Uint8Array(Buffer.from(input, 'base64url'));
+  return new Uint8Array(Buffer.from(input, "base64url"));
 }
 
 async function importHmacKey(secret: string) {
-  return crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
+  return crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"],
+  );
 }
 
 async function sign(value: string, secret: string) {
   const key = await importHmacKey(secret);
-  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(value));
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(value),
+  );
   return base64UrlEncodeBytes(new Uint8Array(signature));
 }
 
 // Usa crypto.subtle.verify (constant-time) em vez de recalcular a
 // assinatura esperada e comparar strings com `!==`, que é vulnerável a
 // timing attack.
-async function verifySignature(value: string, secret: string, signature: string) {
+async function verifySignature(
+  value: string,
+  secret: string,
+  signature: string,
+) {
   try {
     const key = await importHmacKey(secret);
     const signatureBytes = base64UrlDecodeBytes(signature);
-    return await crypto.subtle.verify('HMAC', key, signatureBytes as unknown as ArrayBuffer, encoder.encode(value));
+    return await crypto.subtle.verify(
+      "HMAC",
+      key,
+      signatureBytes as unknown as ArrayBuffer,
+      encoder.encode(value),
+    );
   } catch {
     return false;
   }
 }
 
-export async function createSessionToken(payload: Omit<SessionPayload, 'exp'>): Promise<string> {
+export async function createSessionToken(
+  payload: Omit<SessionPayload, "exp">,
+): Promise<string> {
   const exp = Math.floor(Date.now() / 1000) + authConfig.tokenTtlSeconds;
-  const header = base64UrlEncodeText(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const body = base64UrlEncodeText(JSON.stringify({ ...payload, exp } satisfies SessionPayload));
+  const header = base64UrlEncodeText(
+    JSON.stringify({ alg: "HS256", typ: "JWT" }),
+  );
+  const body = base64UrlEncodeText(
+    JSON.stringify({ ...payload, exp } satisfies SessionPayload),
+  );
   const unsigned = `${header}.${body}`;
   const signature = await sign(unsigned, getSecret());
   return `${unsigned}.${signature}`;
 }
 
-export async function verifySessionToken(token: string): Promise<SessionPayload | null> {
+export async function verifySessionToken(
+  token: string,
+): Promise<SessionPayload | null> {
   try {
-    const [header, body, signature] = token.split('.');
+    const [header, body, signature] = token.split(".");
     if (!header || !body || !signature) {
       return null;
     }
@@ -101,13 +134,20 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
       return null;
     }
 
-    const payload = JSON.parse(base64UrlDecodeText(body)) as Partial<SessionPayload>;
+    const payload = JSON.parse(
+      base64UrlDecodeText(body),
+    ) as Partial<SessionPayload>;
 
     if (!payload.exp || payload.exp <= Math.floor(Date.now() / 1000)) {
       return null;
     }
 
-    if (!payload.userId || !payload.tenantId || !payload.plan || !payload.tenantName) {
+    if (
+      !payload.userId ||
+      !payload.tenantId ||
+      !payload.plan ||
+      !payload.tenantName
+    ) {
       return null;
     }
 

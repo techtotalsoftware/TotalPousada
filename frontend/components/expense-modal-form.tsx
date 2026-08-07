@@ -1,13 +1,20 @@
-'use client';
+"use client";
 
-import { AnimatePresence, motion } from 'framer-motion';
-import { Plus, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState, useTransition, type FormEvent } from 'react';
-import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
-import type { ExpenseCategory } from '@/types/domain';
+import { AnimatePresence, motion } from "framer-motion";
+import { Plus, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition, type FormEvent } from "react";
+import { formatCurrencyInput, parseCurrencyInput } from "@/lib/utils";
+import type { ExpenseCategory } from "@/types/domain";
 
-const expenseCategories: ExpenseCategory[] = ['limpeza', 'manutenção', 'impostos', 'insumos', 'comissões', 'outros'];
+const expenseCategories: ExpenseCategory[] = [
+  "limpeza",
+  "manutenção",
+  "impostos",
+  "insumos",
+  "comissões",
+  "outros",
+];
 
 type FormState = {
   description: string;
@@ -17,9 +24,9 @@ type FormState = {
 };
 
 const initialState: FormState = {
-  description: '',
-  amount: '',
-  category: 'limpeza',
+  description: "",
+  amount: "",
+  category: "limpeza",
   date: new Date().toISOString().slice(0, 10),
 };
 
@@ -35,16 +42,21 @@ export function ExpenseModalForm() {
     setError(null);
 
     const amount = parseCurrencyInput(form.amount);
-    if (!form.description || !form.date || Number.isNaN(amount) || amount <= 0) {
-      setError('Preencha descrição, valor e data com valores válidos.');
+    if (
+      !form.description ||
+      !form.date ||
+      Number.isNaN(amount) ||
+      amount <= 0
+    ) {
+      setError("Preencha descrição, valor e data com valores válidos.");
       return;
     }
 
     startTransition(async () => {
       try {
-        const response = await fetch('/api/tenant/expenses', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/tenant/expenses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             expense: {
               description: form.description,
@@ -58,14 +70,18 @@ export function ExpenseModalForm() {
         const payload = await response.json().catch(() => null);
 
         if (!response.ok) {
-          throw new Error(payload?.message || 'Falha ao salvar despesa.');
+          throw new Error(payload?.message || "Falha ao salvar despesa.");
         }
 
         setForm(initialState);
         setIsOpen(false);
         router.refresh();
       } catch (actionError) {
-        setError(actionError instanceof Error ? actionError.message : 'Falha ao salvar despesa.');
+        setError(
+          actionError instanceof Error
+            ? actionError.message
+            : "Falha ao salvar despesa.",
+        );
       }
     });
   }
@@ -96,21 +112,35 @@ export function ExpenseModalForm() {
             >
               <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-5">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.35em] text-sky-300">Nova despesa</p>
-                  <h3 className="mt-3 text-2xl font-semibold text-white">Lançar custo operacional</h3>
+                  <p className="text-xs font-semibold uppercase tracking-[0.35em] text-sky-300">
+                    Nova despesa
+                  </p>
+                  <h3 className="mt-3 text-2xl font-semibold text-white">
+                    Lançar custo operacional
+                  </h3>
                 </div>
-                <button onClick={() => setIsOpen(false)} className="rounded-2xl border border-white/10 bg-slate-950/60 p-3 text-slate-300">
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="rounded-2xl border border-white/10 bg-slate-950/60 p-3 text-slate-300"
+                >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
               <form onSubmit={onSubmit} className="mt-6 space-y-5">
                 <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-slate-200">Descrição</span>
+                  <span className="mb-2 block text-sm font-medium text-slate-200">
+                    Descrição
+                  </span>
                   <input
                     type="text"
                     value={form.description}
-                    onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        description: event.target.value,
+                      }))
+                    }
                     placeholder="Material de limpeza, Conserto do ar-condicionado"
                     className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500"
                   />
@@ -118,32 +148,53 @@ export function ExpenseModalForm() {
 
                 <div className="grid gap-5 md:grid-cols-2">
                   <label className="block">
-                    <span className="mb-2 block text-sm font-medium text-slate-200">Valor</span>
+                    <span className="mb-2 block text-sm font-medium text-slate-200">
+                      Valor
+                    </span>
                     <input
                       type="text"
                       value={form.amount}
-                      onChange={(event) => setForm((current) => ({ ...current, amount: formatCurrencyInput(event.target.value) }))}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          amount: formatCurrencyInput(event.target.value),
+                        }))
+                      }
                       placeholder="R$ 0,00"
                       className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500"
                     />
                   </label>
 
                   <label className="block">
-                    <span className="mb-2 block text-sm font-medium text-slate-200">Data</span>
+                    <span className="mb-2 block text-sm font-medium text-slate-200">
+                      Data
+                    </span>
                     <input
                       type="date"
                       value={form.date}
-                      onChange={(event) => setForm((current) => ({ ...current, date: event.target.value }))}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          date: event.target.value,
+                        }))
+                      }
                       className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none"
                     />
                   </label>
                 </div>
 
                 <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-slate-200">Categoria</span>
+                  <span className="mb-2 block text-sm font-medium text-slate-200">
+                    Categoria
+                  </span>
                   <select
                     value={form.category}
-                    onChange={(event) => setForm((current) => ({ ...current, category: event.target.value as ExpenseCategory }))}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        category: event.target.value as ExpenseCategory,
+                      }))
+                    }
                     className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none"
                   >
                     {expenseCategories.map((category) => (
@@ -154,7 +205,9 @@ export function ExpenseModalForm() {
                   </select>
                 </label>
 
-                {error ? <p className="text-sm text-rose-300">{error}</p> : null}
+                {error ? (
+                  <p className="text-sm text-rose-300">{error}</p>
+                ) : null}
 
                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                   <button
@@ -169,7 +222,7 @@ export function ExpenseModalForm() {
                     disabled={isPending}
                     className="rounded-2xl bg-sky-500 px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-sky-950/30 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {isPending ? 'Salvando...' : 'Salvar'}
+                    {isPending ? "Salvando..." : "Salvar"}
                   </button>
                 </div>
               </form>

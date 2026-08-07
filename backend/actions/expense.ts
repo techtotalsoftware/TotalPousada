@@ -27,7 +27,10 @@ function normalizeTenantId(value: string | number) {
 /**
  * Cria uma nova despesa via Sequelize.
  */
-export async function createExpense(data: CreateExpenseInput, context: Context) {
+export async function createExpense(
+  data: CreateExpenseInput,
+  context: Context,
+) {
   const { tenant } = context;
 
   try {
@@ -52,7 +55,10 @@ export async function createExpense(data: CreateExpenseInput, context: Context) 
     createdByUserId: normalizeTenantId(context.user.id),
     description: data.description.trim(),
     amount: Number(data.amount),
-    date: data.date instanceof Date ? data.date.toISOString().slice(0, 10) : String(data.date),
+    date:
+      data.date instanceof Date
+        ? data.date.toISOString().slice(0, 10)
+        : String(data.date),
     category: data.category as any,
     tenantId: normalizeTenantId(tenant.id),
   });
@@ -93,7 +99,10 @@ export async function listExpenses(
 
   return Expense.findAll({
     where,
-    order: [["date", "DESC"], ["id", "DESC"]],
+    order: [
+      ["date", "DESC"],
+      ["id", "DESC"],
+    ],
   });
 }
 

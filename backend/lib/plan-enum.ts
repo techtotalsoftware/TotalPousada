@@ -9,7 +9,9 @@ export enum TenantPlan {
   ENTERPRISE = "Enterprise",
 }
 
-export function normalizeTenantPlan(plan: string | null | undefined): TenantPlan | null {
+export function normalizeTenantPlan(
+  plan: string | null | undefined,
+): TenantPlan | null {
   const normalized = plan?.trim().toLowerCase();
 
   switch (normalized) {
@@ -44,7 +46,7 @@ export const PLAN_LEVELS: Record<TenantPlan, number> = {
  */
 export function hasPlanAccess(
   currentPlan: TenantPlan,
-  requiredPlan: TenantPlan
+  requiredPlan: TenantPlan,
 ): boolean {
   return PLAN_LEVELS[currentPlan] >= PLAN_LEVELS[requiredPlan];
 }
@@ -54,6 +56,8 @@ export function hasPlanAccess(
  * @param plan - String a ser validada
  * @returns boolean - true se é um plano váışido
  */
-export function isValidPlan(plan: string | null | undefined): plan is TenantPlan {
+export function isValidPlan(
+  plan: string | null | undefined,
+): plan is TenantPlan {
   return normalizeTenantPlan(plan) !== null;
 }

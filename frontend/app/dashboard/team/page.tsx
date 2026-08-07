@@ -6,7 +6,12 @@ import type { DashboardFeatureKey } from "@/lib/dashboard-access";
 import { DEFAULT_STAFF_FEATURES } from "@/lib/dashboard-access";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
-const TEAM_ROLE_OPTIONS = ["Recepcao", "Limpeza", "Manutencao", "Gestao"] as const;
+const TEAM_ROLE_OPTIONS = [
+  "Recepcao",
+  "Limpeza",
+  "Manutencao",
+  "Gestao",
+] as const;
 const TEAM_SHIFT_OPTIONS = ["Manha", "Tarde", "Noite"] as const;
 
 type TeamRole = (typeof TEAM_ROLE_OPTIONS)[number];
@@ -80,16 +85,17 @@ export default function TeamPage() {
   const [permissionDraft, setPermissionDraft] = useState<
     Record<number, DashboardFeatureKey[]>
   >({});
-  const permissionOptions: Array<{ key: DashboardFeatureKey; label: string }> = [
-    { key: "rooms", label: "Quartos" },
-    { key: "reservations", label: "Reservas" },
-    { key: "gallery", label: "Galeria" },
-    { key: "finance", label: "Financeiro" },
-    { key: "team", label: "Equipe" },
-    { key: "promotions", label: "Promoções" },
-    { key: "calendar", label: "Calendário" },
-    { key: "guests", label: "Hóspedes" },
-  ];
+  const permissionOptions: Array<{ key: DashboardFeatureKey; label: string }> =
+    [
+      { key: "rooms", label: "Quartos" },
+      { key: "reservations", label: "Reservas" },
+      { key: "gallery", label: "Galeria" },
+      { key: "finance", label: "Financeiro" },
+      { key: "team", label: "Equipe" },
+      { key: "promotions", label: "Promoções" },
+      { key: "calendar", label: "Calendário" },
+      { key: "guests", label: "Hóspedes" },
+    ];
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
   const [isAddingMember, setIsAddingMember] = useState(false);
 
