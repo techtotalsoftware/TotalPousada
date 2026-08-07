@@ -1,8 +1,50 @@
 import { Landmark, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { ExpenseDeleteButton } from '@/components/expense-delete-button';
 import { ExpenseModalForm } from '@/components/expense-modal-form';
+import { FinanceTrendChart, type FinanceMonthPoint } from '@/components/finance-trend-chart';
 import { getAuthenticatedSession } from '@/lib/auth';
 import { getExpenses, getReservations } from '@/services/tenantService';
+
+const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat('pt-BR', { month: 'short', year: '2-digit' });
+
+function monthKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function buildMonthlyTrend(
+  reservations: Array<{ status: string; amount: number; checkIn: string }>,
+  expenses: Array<{ amount: number; date: string }>,
+): FinanceMonthPoint[] {
+  const months: FinanceMonthPoint[] = [];
+  const now = new Date();
+
+  for (let offset = 5; offset >= 0; offset -= 1) {
+    const reference = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    months.push({ key: monthKey(reference), label: MONTH_LABEL_FORMATTER.format(reference), revenue: 0, expenses: 0 });
+  }
+
+  const pointByKey = new Map(months.map((point) => [point.key, point]));
+
+  for (const reservation of reservations) {
+    if (reservation.status !== 'confirmed' && reservation.status !== 'pending') continue;
+    const key = String(reservation.checkIn).slice(0, 7);
+    const point = pointByKey.get(key);
+    if (point) {
+      const amount = Number(reservation.amount);
+      point.revenue += Number.isFinite(amount) ? amount : 0;
+    }
+  }
+
+  for (const expense of expenses) {
+    const key = String(expense.date).slice(0, 7);
+    const point = pointByKey.get(key);
+    if (point) {
+      point.expenses += expense.amount;
+    }
+  }
+
+  return months;
+}
 
 function formatCurrency(value: number, currency = 'BRL') {
   return new Intl.NumberFormat('pt-BR', {
@@ -38,6 +80,7 @@ export default async function FinancePage() {
   }, 0);
   const totalExpenses = expenses.reduce((total, expense) => total + expense.amount, 0);
   const netProfit = grossRevenue - totalExpenses;
+  const monthlyTrend = buildMonthlyTrend(reservations, expenses);
 
   return (
     <div className="space-y-6">
@@ -81,6 +124,14 @@ export default async function FinancePage() {
           </div>
           <p className={`mt-3 text-3xl font-semibold ${netProfit >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{formatCurrency(netProfit)}</p>
           <p className="mt-2 text-xs text-slate-500">Faturamento menos despesas</p>
+        </div>
+      </section>
+
+      <section className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/20">
+        <h3 className="text-2xl font-semibold text-white">Receita x despesas (últimos 6 meses)</h3>
+        <p className="mt-1 text-sm text-slate-400">Tendência mensal para acompanhar a saúde financeira ao longo do tempo.</p>
+        <div className="mt-6">
+          <FinanceTrendChart points={monthlyTrend} />
         </div>
       </section>
 

@@ -85,6 +85,7 @@ export default async function GuestsPage() {
           name: String(reservation.guestName ?? ''),
           email: String(reservation.guestEmail ?? ''),
           phone: String(reservation.guestPhone ?? ''),
+          cpf: String(reservation.guestCpf ?? ''),
         },
         notes: String(reservation.notes ?? ''),
       } satisfies GuestRecord;

@@ -128,6 +128,19 @@ async function ensureTenantSlugColumn(models: DbModels) {
   }
 }
 
+async function ensureReservationGuestCountColumn(models: DbModels) {
+  const queryInterface = models.sequelize.getQueryInterface();
+  const table = await queryInterface.describeTable("reservations");
+
+  if (!table.guest_count) {
+    await queryInterface.addColumn("reservations", "guest_count", {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+      defaultValue: 1,
+    });
+  }
+}
+
 async function ensureReservationAddonsColumn(models: DbModels) {
   const queryInterface = models.sequelize.getQueryInterface();
   const table = await queryInterface.describeTable("reservations");
@@ -257,6 +270,15 @@ async function ensureUserTeamColumns(models: DbModels) {
       defaultValue: "[]",
     });
   }
+
+  if (!table.weekly_schedule) {
+    await queryInterface.addColumn("users", "weekly_schedule", {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: "{}",
+      comment: "JSON: escala semanal recorrente por dia (mon..sun)",
+    });
+  }
 }
 
 // Cria os índices únicos "na mão", checando antes se já existem — nunca
@@ -338,6 +360,7 @@ export async function getDb(): Promise<DbModels> {
         await ensureRoomAmenitiesColumn(global.__sequelizeModels);
         await ensureTenantPlanColumn(global.__sequelizeModels);
         await ensureReservationAddonsColumn(global.__sequelizeModels);
+        await ensureReservationGuestCountColumn(global.__sequelizeModels);
         await ensureAuditLogsTable(global.__sequelizeModels);
         await ensureUserTeamColumns(global.__sequelizeModels);
         await ensureReservationUnitNumberColumn(global.__sequelizeModels);

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Op } from "sequelize";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { getDb } from "@/lib/db";
 import { getVerifiedTenantSession, hasFeatureAccess } from "@/lib/tenant-session";
 import { hasPlanAccess } from "@/lib/plan-enum";
@@ -36,6 +37,57 @@ function toCsv(rows: Array<Record<string, string | number>>): string {
   return lines.join("\n");
 }
 
+function formatCurrency(value: number): string {
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function formatPercent(value: number): string {
+  return `${(value * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+}
+
+async function toPdf(
+  metrics: Record<string, unknown>,
+  isEnterprise: boolean,
+): Promise<Uint8Array> {
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([595.28, 841.89]); // A4
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await doc.embedFont(StandardFonts.HelveticaBold);
+  const textColor = rgb(0.15, 0.15, 0.15);
+  const mutedColor = rgb(0.4, 0.4, 0.4);
+  const margin = 50;
+  let y = page.getHeight() - margin;
+
+  page.drawText("Relatório de Ocupação", { x: margin, y, size: 20, font: boldFont, color: textColor });
+  y -= 26;
+  page.drawText(`Mês de referência: ${metrics.month}`, { x: margin, y, size: 12, font, color: mutedColor });
+  y -= 36;
+
+  const rows: Array<[string, string]> = [
+    ["Quartos ativos", String(metrics.roomsTotal)],
+    ["Taxa de ocupação", formatPercent(metrics.occupancyRate as number)],
+    [
+      "Diárias-quarto reservadas",
+      `${metrics.bookedRoomNights} de ${metrics.availableRoomNights}`,
+    ],
+    ["Reservas no mês", String(metrics.reservationsCount)],
+    ["Receita do mês", formatCurrency(metrics.revenue as number)],
+  ];
+
+  if (isEnterprise) {
+    rows.push(["ADR (diária média)", formatCurrency((metrics.adr as number) ?? 0)]);
+    rows.push(["RevPAR", formatCurrency((metrics.revpar as number) ?? 0)]);
+  }
+
+  for (const [label, value] of rows) {
+    page.drawText(label, { x: margin, y, size: 11, font: boldFont, color: textColor });
+    page.drawText(value, { x: margin + 240, y, size: 11, font, color: textColor });
+    y -= 24;
+  }
+
+  return doc.save();
+}
+
 export async function GET(request: Request) {
   const session = await getVerifiedTenantSession();
   if (!session) {
@@ -51,14 +103,18 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const { year, monthIndex } = parseMonthParam(searchParams.get("month"));
-  const wantsCsv = searchParams.get("format") === "csv";
+  const format = searchParams.get("format");
+  const wantsCsv = format === "csv";
+  const wantsPdf = format === "pdf";
+  const isPremium = hasPlanAccess(session.plan, TenantPlan.PREMIUM);
   const isEnterprise = hasPlanAccess(session.plan, TenantPlan.ENTERPRISE);
 
-  // Exportação e métricas avançadas (ADR/RevPAR) são exclusivas do plano
-  // Enterprise, mesmo com a tela de Relatórios já liberada no Premium.
-  if (wantsCsv && !isEnterprise) {
+  // Exportação (CSV ou PDF) acompanha o mesmo plano da tela de Relatórios
+  // (Premium). ADR/RevPAR continuam exclusivos do Enterprise (ver bloco
+  // isEnterprise abaixo).
+  if ((wantsCsv || wantsPdf) && !isPremium) {
     return NextResponse.json(
-      { message: "Exportação disponível apenas no plano Enterprise." },
+      { message: "Exportação disponível apenas no plano Premium ou superior." },
       { status: 403 },
     );
   }
@@ -148,6 +204,18 @@ export async function GET(request: Request) {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
         "Content-Disposition": `attachment; filename="relatorio-ocupacao-${metrics.month}.csv"`,
+      },
+    });
+  }
+
+  if (wantsPdf) {
+    const pdfBytes = await toPdf(metrics, isEnterprise);
+
+    return new NextResponse(Buffer.from(pdfBytes), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="relatorio-ocupacao-${metrics.month}.pdf"`,
       },
     });
   }

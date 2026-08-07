@@ -24,6 +24,19 @@ const TEAM_ROLE_OPTIONS = [
 const TEAM_SHIFT_OPTIONS = ["Manha", "Tarde", "Noite"] as const;
 type TeamShift = (typeof TEAM_SHIFT_OPTIONS)[number];
 
+function parseWeeklySchedule(raw: string | null | undefined): Record<string, string | null> {
+  if (!raw) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 type TeamCreatePayload = {
   name?: string;
   username?: string;
@@ -127,6 +140,7 @@ export async function GET() {
       employmentStatus: user.employmentStatus,
       shiftStatus: user.shiftStatus,
       lastPunch: user.lastPunchAt ? user.lastPunchAt.toISOString() : null,
+      weeklySchedule: parseWeeklySchedule(user.weeklySchedule),
       permissions,
       isCurrentUser: user.id === session.userId,
       accountRole: user.role,

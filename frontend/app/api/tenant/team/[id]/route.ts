@@ -9,6 +9,9 @@ import {
 import { getDb } from '@/lib/db';
 import { logAuditEvent } from '@/lib/audit';
 
+const WEEK_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+const SHIFT_VALUES = ['morning', 'afternoon', 'night'] as const;
+
 type MemberActionPayload =
   | {
       action: 'toggle-employment';
@@ -19,7 +22,22 @@ type MemberActionPayload =
   | {
       action: 'set-permissions';
       permissions?: DashboardFeatureKey[];
+    }
+  | {
+      action: 'set-schedule';
+      schedule?: Record<string, string | null>;
     };
+
+function sanitizeWeeklySchedule(input: Record<string, string | null> | undefined): Record<string, string | null> {
+  const sanitized: Record<string, string | null> = {};
+
+  for (const day of WEEK_DAYS) {
+    const value = input?.[day];
+    sanitized[day] = value && (SHIFT_VALUES as readonly string[]).includes(value) ? value : null;
+  }
+
+  return sanitized;
+}
 
 export async function PATCH(
   request: Request,
@@ -133,6 +151,26 @@ export async function PATCH(
     });
 
     return NextResponse.json({ ok: true });
+  }
+
+  if (body.action === 'set-schedule') {
+    const schedule = sanitizeWeeklySchedule(body.schedule);
+
+    await user.update({
+      weeklySchedule: JSON.stringify(schedule),
+    });
+
+    await logAuditEvent({
+      tenantId: session.tenantId,
+      userId: session.userId,
+      userName: session.userName,
+      action: 'team.schedule_updated',
+      entityType: 'user',
+      entityId: String(user.id),
+      metadata: { name: user.name, weeklySchedule: schedule },
+    });
+
+    return NextResponse.json({ ok: true, weeklySchedule: schedule });
   }
 
   return NextResponse.json({ message: 'Acao invalida.' }, { status: 400 });

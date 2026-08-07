@@ -104,6 +104,7 @@ export async function POST(request: Request) {
       guestEmail?: string;
       guestPhone?: string;
       guestCpf?: string;
+      guestCount?: number;
       notes?: string;
       entryType?: 'manual_reservation' | 'blocked';
       unitNumber?: number;
@@ -141,6 +142,7 @@ export async function POST(request: Request) {
       guestEmail: body.guestEmail ?? "",
       guestPhone: body.guestPhone ?? "",
       guestCpf: body.guestCpf ?? "",
+      guestCount: body.guestCount,
       notes: body.notes ?? "",
       preferredUnitNumber: body.unitNumber !== undefined ? Number(body.unitNumber) : undefined,
       addonIds: Array.isArray(body.addonIds)

@@ -58,6 +58,7 @@ export type Reservation = {
   amount: number;
   currency: string;
   customer: Customer;
+  guestCount?: number;
   notes: string;
   // Unidade física (1..quantity) do quarto ocupada por esta reserva — usada
   // pelo calendário para desenhar reservas simultâneas do mesmo tipo de

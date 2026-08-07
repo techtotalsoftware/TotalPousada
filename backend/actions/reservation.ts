@@ -26,6 +26,7 @@ type ManualReservationInput = {
   guestEmail: string;
   guestPhone: string;
   guestCpf?: string;
+  guestCount?: number;
   notes: string;
   // Unidade física específica a reservar/fechar (1..quantity). Se omitido,
   // o sistema atribui automaticamente a primeira unidade livre — usado pelo
@@ -84,6 +85,11 @@ function formatDbDate(value: unknown): string {
   return asString.slice(0, 10);
 }
 
+function normalizeGuestCount(input: number | undefined): number {
+  const value = Math.trunc(Number(input));
+  return Number.isFinite(value) && value > 0 ? value : 1;
+}
+
 function normalizeCpf(input: string | undefined): string | null {
   const raw = (input ?? "").trim();
   if (!raw) {
@@ -134,6 +140,7 @@ function mapReservationToDomain(
       phone: reservation.guestPhone,
       cpf: (reservation.guestCpf as string | null) ?? undefined,
     },
+    guestCount: reservation.guestCount,
     notes: reservation.notes,
   };
 }
@@ -346,6 +353,7 @@ async function createReservationWithRules(
           guestEmail: input.guestEmail,
           guestPhone: input.guestPhone,
           guestCpf: normalizedCpf,
+          guestCount: normalizeGuestCount(input.guestCount),
           notes: input.notes,
           createdByUserId: input.createdByUserId ?? null,
           unitNumber: assignedUnit,

@@ -73,6 +73,7 @@ export default function ReportsPage() {
   }, [month]);
 
   const isEnterprise = metrics?.plan === 'Enterprise';
+  const isPremiumOrAbove = isEnterprise || metrics?.plan === 'Premium';
 
   return (
     <div className="space-y-6">
@@ -92,14 +93,23 @@ export default function ReportsPage() {
               onChange={(event) => setMonth(event.target.value)}
               className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none ring-sky-300 transition focus:ring"
             />
-            {isEnterprise ? (
-              <a
-                href={`/api/tenant/reports/occupancy?month=${month}&format=csv`}
-                className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-sky-900/30 transition hover:bg-sky-400"
-              >
-                <Download className="h-4 w-4" />
-                Exportar CSV
-              </a>
+            {isPremiumOrAbove ? (
+              <div className="flex items-center gap-2">
+                <a
+                  href={`/api/tenant/reports/occupancy?month=${month}&format=csv`}
+                  className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-sky-900/30 transition hover:bg-sky-400"
+                >
+                  <Download className="h-4 w-4" />
+                  Exportar CSV
+                </a>
+                <a
+                  href={`/api/tenant/reports/occupancy?month=${month}&format=pdf`}
+                  className="inline-flex items-center gap-2 rounded-xl border border-sky-400/40 bg-transparent px-4 py-2 text-sm font-semibold text-sky-200 transition hover:bg-sky-500/10"
+                >
+                  <Download className="h-4 w-4" />
+                  Exportar PDF
+                </a>
+              </div>
             ) : null}
           </div>
         </div>
@@ -149,7 +159,7 @@ export default function ReportsPage() {
               </>
             ) : (
               <article className="flex flex-col justify-center rounded-[24px] border border-dashed border-white/15 bg-slate-900/40 p-5 text-center text-sm text-slate-400">
-                <p>ADR, RevPAR e exportação CSV são exclusivos do plano Enterprise.</p>
+                <p>ADR e RevPAR são exclusivos do plano Enterprise.</p>
               </article>
             )}
           </section>

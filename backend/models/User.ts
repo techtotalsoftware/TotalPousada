@@ -20,11 +20,14 @@ export type UserAttributes = {
   shiftLabel: ShiftLabel;
   lastPunchAt: Date | null;
   dashboardPermissions: string;
+  // JSON: { mon?: ShiftLabel|null, tue?: ..., ... } — escala semanal recorrente
+  // do colaborador, separada do shiftStatus (que é o turno "batido" agora).
+  weeklySchedule: string;
   createdAt?: Date;
   updatedAt?: Date;
 };
 
-export type UserCreationAttributes = Optional<UserAttributes, "id" | "name" | "role" | "phone" | "teamRole" | "employmentStatus" | "shiftStatus" | "shiftLabel" | "lastPunchAt" | "dashboardPermissions" | "createdAt" | "updatedAt">;
+export type UserCreationAttributes = Optional<UserAttributes, "id" | "name" | "role" | "phone" | "teamRole" | "employmentStatus" | "shiftStatus" | "shiftLabel" | "lastPunchAt" | "dashboardPermissions" | "weeklySchedule" | "createdAt" | "updatedAt">;
 
 export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   declare id: number;
@@ -40,6 +43,7 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   declare shiftLabel: ShiftLabel;
   declare lastPunchAt: Date | null;
   declare dashboardPermissions: string;
+  declare weeklySchedule: string;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 
@@ -68,6 +72,7 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
       shiftLabel: { type: DataTypes.ENUM("morning", "afternoon", "night"), allowNull: false, defaultValue: "morning", field: "shift_label" },
       lastPunchAt: { type: DataTypes.DATE, allowNull: true, field: "last_punch_at" },
       dashboardPermissions: { type: DataTypes.TEXT, allowNull: false, defaultValue: "[]", field: "dashboard_permissions" },
+      weeklySchedule: { type: DataTypes.TEXT, allowNull: false, defaultValue: "{}", field: "weekly_schedule" },
     }, { sequelize, tableName: "users", modelName: "User" });
   }
 }

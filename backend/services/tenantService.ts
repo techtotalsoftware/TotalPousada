@@ -165,6 +165,7 @@ function mapReservation(
       phone: reservation.guestPhone,
       cpf: reservation.guestCpf ?? undefined,
     },
+    guestCount: reservation.guestCount,
     notes: reservation.notes,
     unitNumber: reservation.unitNumber ?? null,
   };
@@ -360,6 +361,10 @@ export async function updateReservation(
         guestEmail: updatedReservation.customer.email,
         guestPhone: updatedReservation.customer.phone,
         guestCpf: updatedReservation.customer.cpf ?? reservation.guestCpf ?? null,
+        guestCount:
+          updatedReservation.guestCount && updatedReservation.guestCount > 0
+            ? Math.trunc(updatedReservation.guestCount)
+            : reservation.guestCount,
         notes: updatedReservation.notes,
         unitNumber: assignedUnitNumber,
       },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Clock3, Plus, ShieldCheck } from "lucide-react";
+import { CalendarDays, Clock3, Plus, ShieldCheck } from "lucide-react";
 import type { DashboardFeatureKey } from "@/lib/dashboard-access";
 import { DEFAULT_STAFF_FEATURES, hasPlanAccessToFeature } from "@/lib/dashboard-access";
 import { TenantPlan } from "@/lib/plan-enum";
@@ -20,6 +20,34 @@ type TeamEmploymentStatus = "active" | "inactive";
 type TeamShift = "Manha" | "Tarde" | "Noite";
 type TeamShiftStatus = "off" | "on_shift";
 
+const WEEK_DAYS = [
+  { key: "mon", label: "Seg" },
+  { key: "tue", label: "Ter" },
+  { key: "wed", label: "Qua" },
+  { key: "thu", label: "Qui" },
+  { key: "fri", label: "Sex" },
+  { key: "sat", label: "Sáb" },
+  { key: "sun", label: "Dom" },
+] as const;
+
+type WeekDayKey = (typeof WEEK_DAYS)[number]["key"];
+type ScheduleShift = "morning" | "afternoon" | "night" | null;
+type WeeklySchedule = Record<WeekDayKey, ScheduleShift>;
+
+const SHIFT_SELECT_OPTIONS: Array<{ value: NonNullable<ScheduleShift> | ""; label: string }> = [
+  { value: "", label: "Folga" },
+  { value: "morning", label: "Manhã" },
+  { value: "afternoon", label: "Tarde" },
+  { value: "night", label: "Noite" },
+];
+
+function emptyWeeklySchedule(): WeeklySchedule {
+  return WEEK_DAYS.reduce((acc, day) => {
+    acc[day.key] = null;
+    return acc;
+  }, {} as WeeklySchedule);
+}
+
 type TeamMember = {
   id: number;
   name: string;
@@ -30,6 +58,7 @@ type TeamMember = {
   employmentStatus: TeamEmploymentStatus;
   shiftStatus: TeamShiftStatus;
   lastPunch: string | null;
+  weeklySchedule: Partial<WeeklySchedule>;
   permissions: DashboardFeatureKey[];
   isCurrentUser: boolean;
   accountRole: "admin" | "staff";
@@ -88,6 +117,12 @@ export default function TeamPage() {
   const [permissionDraft, setPermissionDraft] = useState<
     Record<number, DashboardFeatureKey[]>
   >({});
+  const [scheduleDraft, setScheduleDraft] = useState<
+    Record<number, WeeklySchedule>
+  >({});
+  const [savingScheduleFor, setSavingScheduleFor] = useState<number | null>(
+    null,
+  );
   const allPermissionOptions: Array<{ key: DashboardFeatureKey; label: string }> =
     [
       { key: "rooms", label: "Quartos" },
@@ -134,6 +169,15 @@ export default function TeamPage() {
         payload.members.reduce<Record<number, DashboardFeatureKey[]>>(
           (acc, member) => {
             acc[member.id] = member.permissions;
+            return acc;
+          },
+          {},
+        ),
+      );
+      setScheduleDraft(
+        payload.members.reduce<Record<number, WeeklySchedule>>(
+          (acc, member) => {
+            acc[member.id] = { ...emptyWeeklySchedule(), ...member.weeklySchedule };
             return acc;
           },
           {},
@@ -308,6 +352,40 @@ export default function TeamPage() {
       );
     } finally {
       setSavingPermissionsFor(null);
+    }
+  }
+
+  async function saveSchedule(memberId: number) {
+    setSavingScheduleFor(memberId);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/tenant/team/${memberId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "set-schedule",
+          schedule: scheduleDraft[memberId] ?? emptyWeeklySchedule(),
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json()) as { message?: string };
+        setError(payload.message ?? "Nao foi possivel salvar a escala.");
+        return;
+      }
+
+      await loadTeam();
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Erro de conexao ao salvar a escala.",
+      );
+    } finally {
+      setSavingScheduleFor(null);
     }
   }
 
@@ -627,6 +705,64 @@ export default function TeamPage() {
                         * Gestor sempre enxerga todas as opções do sistema.
                       </p>
                     )}
+                  </div>
+
+                  <div className="mt-5 rounded-xl border border-white/5 bg-slate-900/30 p-4">
+                    <p className="mb-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] text-sky-200/80">
+                      <CalendarDays className="h-4 w-4" /> Escala semanal
+                    </p>
+
+                    <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                      {WEEK_DAYS.map((day) => {
+                        const value =
+                          scheduleDraft[member.id]?.[day.key] ?? null;
+
+                        return (
+                          <label
+                            key={day.key}
+                            className="flex flex-col items-center gap-1 rounded-lg border border-white/5 bg-slate-950/40 px-1.5 py-2 text-[11px] text-slate-300"
+                          >
+                            <span className="font-medium text-slate-400">
+                              {day.label}
+                            </span>
+                            <select
+                              value={value ?? ""}
+                              disabled={!canManage}
+                              onChange={(event) =>
+                                setScheduleDraft((prev) => ({
+                                  ...prev,
+                                  [member.id]: {
+                                    ...(prev[member.id] ??
+                                      emptyWeeklySchedule()),
+                                    [day.key]:
+                                      (event.target.value as ScheduleShift) ||
+                                      null,
+                                  },
+                                }))
+                              }
+                              className="w-full cursor-pointer rounded-md border border-white/10 bg-slate-950 px-1 py-1 text-[10px] text-slate-200 outline-none focus:border-sky-400/50 disabled:cursor-not-allowed"
+                            >
+                              {SHIFT_SELECT_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => void saveSchedule(member.id)}
+                      disabled={!canManage || savingScheduleFor === member.id}
+                      className="mt-4 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-200 transition-all duration-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-35"
+                    >
+                      {savingScheduleFor === member.id
+                        ? "Salvando..."
+                        : "Salvar escala"}
+                    </button>
                   </div>
                 </div>
               );

@@ -16,7 +16,7 @@ export type GuestRecord = {
   channelReference: string;
   amount: number;
   currency: string;
-  customer: { name: string; email: string; phone: string };
+  customer: { name: string; email: string; phone: string; cpf: string };
   notes: string;
 };
 
@@ -208,6 +208,10 @@ export default function GuestsView({
                           <p className="inline-flex items-center gap-2">
                             <Phone className="h-4 w-4 text-sky-300" />
                             {reservation.customer.phone || 'Não informado'}
+                          </p>
+                          <p className="inline-flex items-center gap-2">
+                            <ShieldCheck className="h-4 w-4 text-sky-300" />
+                            CPF: {reservation.customer.cpf || 'Não informado'}
                           </p>
                         </div>
                       </div>

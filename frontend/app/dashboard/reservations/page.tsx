@@ -47,6 +47,7 @@ type FormState = {
   guestEmail: string;
   guestPhone: string;
   guestCpf: string;
+  guestCount: string;
   checkIn: string;
   checkOut: string;
   amount: string;
@@ -61,6 +62,7 @@ const INITIAL_FORM: FormState = {
   guestEmail: '',
   guestPhone: '',
   guestCpf: '',
+  guestCount: '1',
   checkIn: '',
   checkOut: '',
   amount: '',
@@ -238,6 +240,7 @@ export default function ReservationsPage() {
           guestEmail: form.entryType === 'blocked' ? '' : form.guestEmail,
           guestPhone: form.entryType === 'blocked' ? '' : form.guestPhone,
           guestCpf: form.entryType === 'blocked' ? '' : form.guestCpf,
+          guestCount: form.entryType === 'blocked' ? 1 : Number(form.guestCount) || 1,
           checkIn: form.checkIn,
           checkOut: form.checkOut,
           amount: parseCurrencyInput(form.amount || '0'),
@@ -260,6 +263,7 @@ export default function ReservationsPage() {
         guestEmail: '',
         guestPhone: '',
         guestCpf: '',
+        guestCount: '1',
         checkIn: '',
         checkOut: '',
         amount: '',
@@ -383,6 +387,15 @@ export default function ReservationsPage() {
               onChange={(event) => setForm((current) => ({ ...current, guestCpf: event.target.value }))}
               required={form.entryType !== 'blocked'}
               placeholder="CPF"
+              className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none ring-sky-300 transition focus:ring"
+            />
+            <input
+              type="number"
+              min={1}
+              value={form.guestCount}
+              onChange={(event) => setForm((current) => ({ ...current, guestCount: event.target.value }))}
+              required={form.entryType !== 'blocked'}
+              placeholder="Número de hóspedes"
               className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none ring-sky-300 transition focus:ring"
             />
             <div className="grid grid-cols-2 gap-3">

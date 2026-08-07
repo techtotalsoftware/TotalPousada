@@ -10,7 +10,8 @@ export type AuditAction =
   | "team.member_created"
   | "team.member_deleted"
   | "team.permissions_updated"
-  | "team.employment_toggled";
+  | "team.employment_toggled"
+  | "team.schedule_updated";
 
 export type AuditLogAttributes = {
   id: number;

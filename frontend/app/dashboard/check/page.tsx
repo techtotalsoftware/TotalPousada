@@ -23,6 +23,7 @@ type ReservationApiItem = {
   notes: string;
   checkedInAt?: string | null;
   checkedOutAt?: string | null;
+  guestCount?: number;
   customer: {
     name: string;
     email: string;
@@ -118,7 +119,7 @@ function mapReservationToStay(reservation: ReservationApiItem, roomNameById: Map
     guestName: reservation.customer?.name?.trim() || 'Hóspede sem nome',
     document: reservation.channelReference || reservation.customer?.phone || 'Não informado',
     room: roomNameById.get(reservation.roomId) ?? reservation.room?.name ?? reservation.roomId,
-    peopleCount: 1,
+    peopleCount: reservation.guestCount && reservation.guestCount > 0 ? reservation.guestCount : 1,
     checkInDate: reservation.checkIn.slice(0, 10),
     checkOutDate: reservation.checkOut.slice(0, 10),
     status: deriveStayStatus(reservation),

@@ -121,9 +121,9 @@ export const FEATURE_PLAN_REQUIREMENTS: Record<DashboardFeatureKey, TenantPlan> 
 
   finance: TenantPlan.PREMIUM,
   team: TenantPlan.PREMIUM,
-  // Relatório básico de ocupação. A própria tela de Relatórios mostra
-  // ADR/RevPAR e exportação CSV só quando o tenant é Enterprise (checagem
-  // interna, não modelada como uma segunda chave aqui).
+  // Relatório de ocupação e exportação CSV já entram no Premium. ADR/RevPAR
+  // só aparecem quando o tenant é Enterprise (checagem interna, não modelada
+  // como uma segunda chave aqui).
   reports: TenantPlan.PREMIUM,
   // Fechamento de quarto e tarifa por período já são aplicados a reservas
   // manuais (ver createReservationWithRules em backend/actions/reservation.ts)

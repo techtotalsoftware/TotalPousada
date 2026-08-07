@@ -25,6 +25,7 @@ export default function GalleryPage() {
   const [photoToDelete, setPhotoToDelete] = useState<GalleryPhoto | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [reorderingId, setReorderingId] = useState<number | null>(null);
+  const [savingCaptionId, setSavingCaptionId] = useState<number | null>(null);
 
   const fetchPhotos = async () => {
     setLoading(true);
@@ -124,6 +125,32 @@ export default function GalleryPage() {
     }
   };
 
+  const saveCaption = async (photo: GalleryPhoto, caption: string) => {
+    if (caption === (photo.caption ?? '')) return;
+
+    setSavingCaptionId(photo.id);
+    try {
+      const res = await fetch(`/api/tenant/gallery/${photo.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caption }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Falha ao salvar legenda');
+      }
+
+      const updated = await res.json();
+      setPhotos((prev) =>
+        prev.map((item) => (item.id === photo.id ? { ...item, caption: updated.caption } : item)),
+      );
+    } catch {
+      showToast('Erro ao salvar legenda');
+    } finally {
+      setSavingCaptionId(null);
+    }
+  };
+
   const movePhoto = async (index: number, direction: -1 | 1) => {
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= photos.length) return;
@@ -218,46 +245,55 @@ export default function GalleryPage() {
                 key={photo.id}
                 className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/50"
               >
-                <img
-                  src={photo.url}
-                  alt={photo.caption || 'Foto da pousada'}
-                  className="h-40 w-full object-cover"
-                />
-                <div className="absolute inset-0 flex flex-col justify-between bg-gradient-to-b from-black/50 via-transparent to-black/60 p-2 opacity-0 transition-opacity group-hover:opacity-100">
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setPhotoToDelete(photo)}
-                      className="rounded-lg border border-white/10 bg-slate-950/80 p-1.5 text-rose-300 hover:bg-rose-500/20"
-                      aria-label="Remover foto"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                <div className="relative">
+                  <img
+                    src={photo.url}
+                    alt={photo.caption || 'Foto da pousada'}
+                    className="h-40 w-full object-cover"
+                  />
+                  <div className="absolute inset-0 flex flex-col justify-between bg-gradient-to-b from-black/50 via-transparent to-black/60 p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setPhotoToDelete(photo)}
+                        className="rounded-lg border border-white/10 bg-slate-950/80 p-1.5 text-rose-300 hover:bg-rose-500/20"
+                        aria-label="Remover foto"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <div className="flex justify-between">
+                      <button
+                        type="button"
+                        onClick={() => movePhoto(index, -1)}
+                        disabled={index === 0 || reorderingId === photo.id}
+                        className="rounded-lg border border-white/10 bg-slate-950/80 p-1.5 text-slate-200 hover:bg-sky-500/20 disabled:opacity-30"
+                        aria-label="Mover para cima"
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => movePhoto(index, 1)}
+                        disabled={index === photos.length - 1 || reorderingId === photo.id}
+                        className="rounded-lg border border-white/10 bg-slate-950/80 p-1.5 text-slate-200 hover:bg-sky-500/20 disabled:opacity-30"
+                        aria-label="Mover para baixo"
+                      >
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <button
-                      type="button"
-                      onClick={() => movePhoto(index, -1)}
-                      disabled={index === 0 || reorderingId === photo.id}
-                      className="rounded-lg border border-white/10 bg-slate-950/80 p-1.5 text-slate-200 hover:bg-sky-500/20 disabled:opacity-30"
-                      aria-label="Mover para cima"
-                    >
-                      <ArrowUp className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => movePhoto(index, 1)}
-                      disabled={index === photos.length - 1 || reorderingId === photo.id}
-                      className="rounded-lg border border-white/10 bg-slate-950/80 p-1.5 text-slate-200 hover:bg-sky-500/20 disabled:opacity-30"
-                      aria-label="Mover para baixo"
-                    >
-                      <ArrowDown className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                  <span className="absolute left-2 top-2 rounded-full border border-white/10 bg-slate-950/80 px-2 py-0.5 text-[10px] text-slate-300">
+                    {index + 1}
+                  </span>
                 </div>
-                <span className="absolute left-2 top-2 rounded-full border border-white/10 bg-slate-950/80 px-2 py-0.5 text-[10px] text-slate-300">
-                  {index + 1}
-                </span>
+                <input
+                  defaultValue={photo.caption ?? ''}
+                  onBlur={(e) => saveCaption(photo, e.target.value.trim())}
+                  placeholder="Legenda (opcional)"
+                  disabled={savingCaptionId === photo.id}
+                  className="w-full border-t border-white/10 bg-slate-950/70 px-3 py-2 text-xs text-white placeholder-slate-500 outline-none transition focus:bg-slate-950 focus:ring-1 focus:ring-inset focus:ring-sky-400/40 disabled:opacity-50"
+                />
               </div>
             ))}
           </div>

@@ -24,6 +24,7 @@ const ACTION_LABELS: Record<string, string> = {
   'team.member_deleted': 'Excluiu o colaborador',
   'team.permissions_updated': 'Alterou permissões do colaborador',
   'team.employment_toggled': 'Alterou o status do colaborador',
+  'team.schedule_updated': 'Alterou a escala semanal do colaborador',
 };
 
 function formatDateTime(value: string) {
