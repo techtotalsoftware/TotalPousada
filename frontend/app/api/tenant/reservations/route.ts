@@ -7,6 +7,7 @@ import {
   updateReservation,
 } from "@/services/tenantService";
 import type { Reservation } from "@/types/domain";
+import { logAuditEvent } from "@/lib/audit";
 
 export async function PATCH(request: Request) {
   const session = await getVerifiedTenantSession();
@@ -25,6 +26,17 @@ export async function PATCH(request: Request) {
 
   try {
     const reservation = await updateReservation(session.tenantId, body.reservation);
+    await logAuditEvent({
+      tenantId: session.tenantId,
+      userId: session.userId,
+      userName: session.userName,
+      action:
+        body.reservation.status === "cancelled"
+          ? "reservation.cancelled"
+          : "reservation.updated",
+      entityType: "reservation",
+      entityId: body.reservation.id,
+    });
     return NextResponse.json({ reservation });
   } catch (error) {
     return NextResponse.json(
@@ -51,7 +63,22 @@ export async function GET() {
 
     const reservations = await getTenantReservations(session.tenantId);
 
-    return NextResponse.json(reservations.map((reservation) => reservation.toJSON()), { status: 200 });
+    const payload = reservations.map((reservation) => {
+      const json = reservation.toJSON() as Record<string, unknown> & {
+        addons: string | null;
+      };
+      let addons: Array<{ id: number; name: string; price: number }> = [];
+      try {
+        const parsed = json.addons ? JSON.parse(json.addons) : [];
+        addons = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        addons = [];
+      }
+
+      return { ...json, addons };
+    });
+
+    return NextResponse.json(payload, { status: 200 });
   } catch (error: any) {
     console.error("Erro ao buscar reservas do SaaS:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -80,6 +107,7 @@ export async function POST(request: Request) {
       notes?: string;
       entryType?: 'manual_reservation' | 'blocked';
       unitNumber?: number;
+      addonIds?: number[];
     };
 
     const entryType = body.entryType ?? 'manual_reservation';
@@ -115,6 +143,18 @@ export async function POST(request: Request) {
       guestCpf: body.guestCpf ?? "",
       notes: body.notes ?? "",
       preferredUnitNumber: body.unitNumber !== undefined ? Number(body.unitNumber) : undefined,
+      addonIds: Array.isArray(body.addonIds)
+        ? body.addonIds.map((id) => Number(id)).filter((id) => Number.isInteger(id))
+        : undefined,
+    });
+
+    await logAuditEvent({
+      tenantId: session.tenantId,
+      userId: session.userId,
+      userName: session.userName,
+      action: "reservation.created",
+      entityType: "reservation",
+      entityId: reservation.id,
     });
 
     return NextResponse.json({ reservation }, { status: 201 });
@@ -149,6 +189,14 @@ export async function DELETE(request: Request) {
 
   try {
     await deleteReservation(session.tenantId, reservationId);
+    await logAuditEvent({
+      tenantId: session.tenantId,
+      userId: session.userId,
+      userName: session.userName,
+      action: "reservation.deleted",
+      entityType: "reservation",
+      entityId: reservationId,
+    });
     return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json(

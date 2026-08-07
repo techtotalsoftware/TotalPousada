@@ -8,6 +8,7 @@ import { User } from "../models/User";
 import { Coupon } from "../models/Coupon";
 import { PropertyPhoto } from "../models/PropertyPhoto";
 import { Addon } from "../models/Addon";
+import { AuditLog } from "../models/AuditLog";
 import mysql2 from "mysql2";
 
 export function createSequelizeClient() {
@@ -33,6 +34,7 @@ export function initializeModels(sequelize: Sequelize) {
   Coupon.initialize(sequelize);
   PropertyPhoto.initialize(sequelize);
   Addon.initialize(sequelize);
+  AuditLog.initialize(sequelize);
   Tenant.hasMany(User, { foreignKey: "tenantId", as: "users" });
   User.belongsTo(Tenant, { foreignKey: "tenantId", as: "tenant" });
 
@@ -50,6 +52,9 @@ export function initializeModels(sequelize: Sequelize) {
 
   Tenant.hasMany(Expense, { foreignKey: "tenantId", as: "expenses" });
   Expense.belongsTo(Tenant, { foreignKey: "tenantId", as: "tenant" });
+
+  Tenant.hasMany(AuditLog, { foreignKey: "tenantId", as: "auditLogs" });
+  AuditLog.belongsTo(Tenant, { foreignKey: "tenantId", as: "tenant" });
 
   User.hasMany(Reservation, {
     foreignKey: "createdByUserId",
@@ -83,5 +88,6 @@ export function initializeModels(sequelize: Sequelize) {
     Coupon,
     PropertyPhoto,
     Addon,
+    AuditLog,
   };
 }

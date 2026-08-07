@@ -5,6 +5,7 @@ import {
   getVerifiedTenantSession,
   hasFeatureAccess,
 } from "../lib/tenant-session";
+import { hasPlanAccessToFeature } from "../lib/dashboard-access";
 import { getDb } from "../lib/db";
 import type { Reservation } from "../types/domain";
 import {
@@ -30,6 +31,9 @@ type ManualReservationInput = {
   // o sistema atribui automaticamente a primeira unidade livre — usado pelo
   // fluxo público e pela reserva manual comum, que não precisam expor isso.
   preferredUnitNumber?: number;
+  // IDs do catálogo de Adicionais (backend/models/Addon.ts) a vincular a esta
+  // reserva. O preço de cada um é somado ao total cobrado.
+  addonIds?: number[];
 };
 
 type ReservationCreationContext = ManualReservationInput & {
@@ -94,6 +98,21 @@ function normalizeCpf(input: string | undefined): string | null {
   return digitsOnly;
 }
 
+function parseAddonsSnapshot(
+  raw: string | null,
+): Array<{ id: number; name: string; price: number }> {
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 function mapReservationToDomain(
   reservation: InstanceType<Awaited<ReturnType<typeof getDb>>["Reservation"]>,
   localRoomId: string,
@@ -108,6 +127,7 @@ function mapReservationToDomain(
     channelReference: reservation.channelReference,
     amount: Number(reservation.amount),
     currency: reservation.currency,
+    addons: parseAddonsSnapshot(reservation.addons),
     customer: {
       name: reservation.guestName,
       email: reservation.guestEmail,
@@ -121,7 +141,7 @@ function mapReservationToDomain(
 async function createReservationWithRules(
   input: ReservationCreationContext,
 ): Promise<Reservation> {
-  const { sequelize, Room, Reservation, Coupon } = await getDb();
+  const { sequelize, Room, Reservation, Coupon, Addon } = await getDb();
   const normalizedCpf = normalizeCpf(input.guestCpf);
   const channexReservationId = input.paymentReference
     ? `mp_${input.paymentReference}`
@@ -276,6 +296,36 @@ async function createReservationWithRules(
         amount = Math.max(0, Math.round(computedAmount * 100) / 100);
       }
 
+      let addonsSnapshot: Array<{ id: number; name: string; price: number }> =
+        [];
+
+      if (
+        input.entryType === "manual_reservation" &&
+        input.addonIds &&
+        input.addonIds.length > 0
+      ) {
+        const addons = await Addon.findAll({
+          where: {
+            id: { [Op.in]: input.addonIds },
+            tenantId: input.tenantId,
+            status: "active",
+          },
+          transaction,
+        });
+
+        addonsSnapshot = addons.map((addon) => ({
+          id: addon.id,
+          name: addon.name,
+          price: Number(addon.price),
+        }));
+
+        const addonsTotal = addonsSnapshot.reduce(
+          (sum, addon) => sum + addon.price,
+          0,
+        );
+        amount = Math.round((amount + addonsTotal) * 100) / 100;
+      }
+
       const created = await Reservation.create(
         {
           roomId: room.id,
@@ -299,6 +349,7 @@ async function createReservationWithRules(
           notes: input.notes,
           createdByUserId: input.createdByUserId ?? null,
           unitNumber: assignedUnit,
+          addons: addonsSnapshot.length > 0 ? JSON.stringify(addonsSnapshot) : null,
         },
         { transaction },
       );
@@ -359,8 +410,16 @@ export async function createManualReservationAction(
     }
   }
 
+  // Adicionais são um recurso do plano Enterprise — mesmo que o cliente envie
+  // addonIds (chamada direta à API, sessão desatualizada), ignora
+  // silenciosamente se o tenant não tiver o plano necessário.
+  const addonIds = hasPlanAccessToFeature(session.plan, "addons")
+    ? input.addonIds
+    : undefined;
+
   return createReservationWithRules({
     ...input,
+    addonIds,
     tenantId: session.tenantId,
     // O usuário demo tem userId negativo (-1) só para não colidir com
     // colaboradores reais na sessão — mas created_by_user_id é UNSIGNED no

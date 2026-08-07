@@ -12,7 +12,9 @@ export type DashboardFeatureKey =
   | 'gallery'
   | 'team'
   | 'finance'
-  | 'guests';
+  | 'guests'
+  | 'reports'
+  | 'audit';
 
 export type UserAccessRole = 'admin' | 'staff' | 'customer';
 
@@ -90,6 +92,18 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     label: 'Historico de hospedes',
     description: 'Dados cadastrais e historico de estadias',
   },
+  {
+    key: 'reports',
+    href: '/dashboard/reports',
+    label: 'Relatorios',
+    description: 'Ocupacao, receita e desempenho da pousada',
+  },
+  {
+    key: 'audit',
+    href: '/dashboard/audit',
+    label: 'Auditoria',
+    description: 'Trilha de acoes realizadas pela equipe',
+  },
 ];
 
 const FEATURE_BY_KEY = new Map(
@@ -107,15 +121,27 @@ export const FEATURE_PLAN_REQUIREMENTS: Record<DashboardFeatureKey, TenantPlan> 
 
   finance: TenantPlan.PREMIUM,
   team: TenantPlan.PREMIUM,
+  // Relatório básico de ocupação. A própria tela de Relatórios mostra
+  // ADR/RevPAR e exportação CSV só quando o tenant é Enterprise (checagem
+  // interna, não modelada como uma segunda chave aqui).
+  reports: TenantPlan.PREMIUM,
+  // Fechamento de quarto e tarifa por período já são aplicados a reservas
+  // manuais (ver createReservationWithRules em backend/actions/reservation.ts)
+  // e o dado já é editável desde o Basic via JSON cru na página de Quartos —
+  // aqui só libera a tela de calendário dedicada. Não depende da landing page,
+  // por isso fica no Premium em vez de junto do pacote de site público.
+  calendar_management: TenantPlan.PREMIUM,
 
-  // Essas funcionalidades alimentam a landing page pública (tarifas/fechamentos
-  // afetam a disponibilidade em /api/public/rooms, cupons e pacotes são
-  // consumidos em /api/public/viva-mar e /api/public/addons), então ficam no
-  // mesmo pacote da Galeria — exclusivo do plano Enterprise.
-  calendar_management: TenantPlan.ENTERPRISE,
+  // Essas funcionalidades só têm efeito prático através da landing page
+  // pública (cupom só é aplicado em /api/public/viva-mar; a galeria só é
+  // exibida via /api/public/gallery), então ficam no mesmo pacote — exclusivo
+  // do plano Enterprise.
   promotions: TenantPlan.ENTERPRISE,
   addons: TenantPlan.ENTERPRISE,
   gallery: TenantPlan.ENTERPRISE,
+  // Trilha de auditoria: relevante quando há mais gente mexendo no sistema —
+  // acompanha o mesmo plano que libera Equipe com granularidade.
+  audit: TenantPlan.ENTERPRISE,
 };
 
 export function hasPlanAccessToFeature(

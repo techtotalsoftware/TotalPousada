@@ -128,6 +128,51 @@ async function ensureTenantSlugColumn(models: DbModels) {
   }
 }
 
+async function ensureReservationAddonsColumn(models: DbModels) {
+  const queryInterface = models.sequelize.getQueryInterface();
+  const table = await queryInterface.describeTable("reservations");
+
+  if (!table.addons) {
+    await queryInterface.addColumn("reservations", "addons", {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
+      comment: "JSON array de adicionais vinculados: [{ id, name, price }]",
+    });
+  }
+}
+
+// Tabela nova (não só coluna nova): sync({alter:true}) só roda fora de
+// produção (ver shouldAutoSyncSchema), então em produção precisamos criar a
+// tabela manualmente na primeira vez — mesmo raciocínio dos ensureXColumn
+// acima, mas para uma tabela inteira.
+async function ensureAuditLogsTable(models: DbModels) {
+  const queryInterface = models.sequelize.getQueryInterface();
+  const tables = await queryInterface.showAllTables();
+
+  if (!tables.includes("audit_logs")) {
+    await queryInterface.createTable("audit_logs", {
+      id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      tenant_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+      user_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
+      user_name: { type: DataTypes.STRING(120), allowNull: false },
+      action: { type: DataTypes.STRING(60), allowNull: false },
+      entity_type: { type: DataTypes.STRING(40), allowNull: false },
+      entity_id: { type: DataTypes.STRING(60), allowNull: true },
+      metadata: { type: DataTypes.TEXT, allowNull: true },
+      createdAt: { type: DataTypes.DATE, allowNull: false },
+    });
+
+    await queryInterface.addIndex("audit_logs", ["tenant_id", "createdAt"], {
+      name: "audit_logs_tenant_created",
+    });
+  }
+}
+
 async function ensureTenantPlanColumn(models: DbModels) {
   const queryInterface = models.sequelize.getQueryInterface();
   const table = await queryInterface.describeTable("tenants");
@@ -292,6 +337,8 @@ export async function getDb(): Promise<DbModels> {
         // repeti-las a cada requisição soma um describeTable() por chamada.
         await ensureRoomAmenitiesColumn(global.__sequelizeModels);
         await ensureTenantPlanColumn(global.__sequelizeModels);
+        await ensureReservationAddonsColumn(global.__sequelizeModels);
+        await ensureAuditLogsTable(global.__sequelizeModels);
         await ensureUserTeamColumns(global.__sequelizeModels);
         await ensureReservationUnitNumberColumn(global.__sequelizeModels);
         await ensureReservationStayColumns(global.__sequelizeModels);

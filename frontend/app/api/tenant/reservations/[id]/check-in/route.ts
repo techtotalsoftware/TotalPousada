@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getVerifiedTenantSession, hasFeatureAccess } from "@/lib/tenant-session";
 import { checkInReservation } from "@/services/tenantService";
+import { logAuditEvent } from "@/lib/audit";
 
 export async function POST(
   _request: Request,
@@ -18,6 +19,14 @@ export async function POST(
 
   try {
     const reservation = await checkInReservation(session.tenantId, id);
+    await logAuditEvent({
+      tenantId: session.tenantId,
+      userId: session.userId,
+      userName: session.userName,
+      action: "reservation.checked_in",
+      entityType: "reservation",
+      entityId: id,
+    });
     return NextResponse.json({ reservation });
   } catch (error) {
     return NextResponse.json(

@@ -13,6 +13,7 @@ import {
 } from "@/lib/dashboard-access";
 import { getDb } from "@/lib/db";
 import { TenantPlan } from "@/lib/plan-enum";
+import { logAuditEvent } from "@/lib/audit";
 
 const TEAM_ROLE_OPTIONS = [
   "Recepcao",
@@ -235,7 +236,7 @@ export async function POST(request: Request) {
   const passwordHash = await bcrypt.hash(body.password, 10);
 
   try {
-    await User.create({
+    const newUser = await User.create({
       name: body.name.trim(),
       email: fullEmail,
       passwordHash,
@@ -252,6 +253,16 @@ export async function POST(request: Request) {
       shiftStatus: "off",
       employmentStatus: "active",
       dashboardPermissions: JSON.stringify(permissions),
+    });
+
+    await logAuditEvent({
+      tenantId: session.tenantId,
+      userId: session.userId,
+      userName: session.userName,
+      action: "team.member_created",
+      entityType: "user",
+      entityId: String(newUser.id),
+      metadata: { name: newUser.name, email: newUser.email },
     });
 
     return NextResponse.json({ ok: true, email: fullEmail }, { status: 201 });

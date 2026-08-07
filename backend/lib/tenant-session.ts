@@ -13,6 +13,8 @@ export type VerifiedTenantSession = {
   userId: number;
   tenantId: number;
   tenantName: string;
+  // Nome de exibição do autor da ação — usado na trilha de auditoria.
+  userName: string;
   plan: TenantPlan;
   role: UserAccessRole;
   permissions: DashboardFeatureKey[];
@@ -40,6 +42,7 @@ export async function getVerifiedTenantSession(): Promise<VerifiedTenantSession 
       userId: session.userId,
       tenantId: session.tenantId,
       tenantName: session.tenantName,
+      userName: "Usuário demo",
       plan: session.plan,
       role: session.role,
       permissions: session.permissions,
@@ -75,6 +78,7 @@ export async function getVerifiedTenantSession(): Promise<VerifiedTenantSession 
     userId: user.id,
     tenantId: Number(tenant.id),
     tenantName: tenant.name,
+    userName: user.name || user.email,
     plan: tenant.plan,
     role: user.role,
     permissions,

@@ -7,6 +7,7 @@ import {
   type DashboardFeatureKey,
 } from '@/lib/dashboard-access';
 import { getDb } from '@/lib/db';
+import { logAuditEvent } from '@/lib/audit';
 
 type MemberActionPayload =
   | {
@@ -69,7 +70,9 @@ export async function PATCH(
       return NextResponse.json({ message: 'Nao e permitido inativar o proprio usuario logado.' }, { status: 400 });
     }
 
-    if (user.employmentStatus === 'active') {
+    const nextStatus = user.employmentStatus === 'active' ? 'inactive' : 'active';
+
+    if (nextStatus === 'inactive') {
       await user.update({
         employmentStatus: 'inactive',
         shiftStatus: 'off',
@@ -80,6 +83,16 @@ export async function PATCH(
         employmentStatus: 'active',
       });
     }
+
+    await logAuditEvent({
+      tenantId: session.tenantId,
+      userId: session.userId,
+      userName: session.userName,
+      action: 'team.employment_toggled',
+      entityType: 'user',
+      entityId: String(user.id),
+      metadata: { name: user.name, newStatus: nextStatus },
+    });
 
     return NextResponse.json({ ok: true });
   }
@@ -107,6 +120,16 @@ export async function PATCH(
 
     await user.update({
       dashboardPermissions: JSON.stringify(resolved),
+    });
+
+    await logAuditEvent({
+      tenantId: session.tenantId,
+      userId: session.userId,
+      userName: session.userName,
+      action: 'team.permissions_updated',
+      entityType: 'user',
+      entityId: String(user.id),
+      metadata: { name: user.name, permissions: resolved },
     });
 
     return NextResponse.json({ ok: true });
@@ -161,7 +184,18 @@ export async function DELETE(
     return NextResponse.json({ message: 'Exclusao disponivel apenas para colaboradores.' }, { status: 400 });
   }
 
+  const deletedUserName = user.name;
   await user.destroy();
+
+  await logAuditEvent({
+    tenantId: session.tenantId,
+    userId: session.userId,
+    userName: session.userName,
+    action: 'team.member_deleted',
+    entityType: 'user',
+    entityId: String(memberId),
+    metadata: { name: deletedUserName },
+  });
 
   return NextResponse.json({ ok: true });
 }

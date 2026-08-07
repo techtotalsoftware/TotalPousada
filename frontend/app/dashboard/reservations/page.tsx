@@ -12,6 +12,13 @@ type RoomOption = {
   status: 'active' | 'maintenance';
 };
 
+type AddonOption = {
+  id: number;
+  name: string;
+  price: number;
+  status: 'active' | 'inactive';
+};
+
 type ReservationItem = {
   id: string;
   roomId: string;
@@ -22,6 +29,7 @@ type ReservationItem = {
   amount: number;
   currency: string;
   notes: string;
+  addons?: Array<{ id: number; name: string; price: number }>;
   customer: {
     name: string;
     email: string;
@@ -44,6 +52,7 @@ type FormState = {
   amount: string;
   notes: string;
   entryType: 'manual_reservation' | 'blocked';
+  addonIds: number[];
 };
 
 const INITIAL_FORM: FormState = {
@@ -57,7 +66,12 @@ const INITIAL_FORM: FormState = {
   amount: '',
   notes: '',
   entryType: 'manual_reservation',
+  addonIds: [],
 };
+
+function formatCurrencyLabel(value: number) {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
 
 function formatDateLabel(value: string) {
   if (!value) return '-';
@@ -103,6 +117,7 @@ function statusClass(status: ReservationItem['status']) {
 
 export default function ReservationsPage() {
   const [rooms, setRooms] = useState<RoomOption[]>([]);
+  const [addonsCatalog, setAddonsCatalog] = useState<AddonOption[]>([]);
   const [reservations, setReservations] = useState<ReservationItem[]>([]);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [isLoading, setIsLoading] = useState(true);
@@ -118,9 +133,13 @@ export default function ReservationsPage() {
       setError(null);
 
       try {
-        const [roomsResponse, reservationsResponse] = await Promise.all([
+        const [roomsResponse, reservationsResponse, addonsResponse] = await Promise.all([
           fetch('/api/tenant/rooms'),
           fetch('/api/tenant/reservations'),
+          // Adicionais são exclusivos do plano Enterprise — em planos
+          // menores essa rota devolve 403, então tratamos como "sem
+          // catálogo" em vez de erro fatal da tela.
+          fetch('/api/tenant/addons').catch(() => null),
         ]);
 
         if (!roomsResponse.ok) {
@@ -133,10 +152,15 @@ export default function ReservationsPage() {
 
         const roomsData = (await roomsResponse.json()) as RoomOption[];
         const reservationsData = (await reservationsResponse.json()) as ReservationItem[];
+        const addonsData =
+          addonsResponse && addonsResponse.ok
+            ? ((await addonsResponse.json()) as AddonOption[])
+            : [];
 
         if (!cancelled) {
           setRooms(roomsData);
           setReservations(reservationsData);
+          setAddonsCatalog(addonsData.filter((addon) => addon.status === 'active'));
           setForm((current) => ({
             ...current,
             roomId: current.roomId || roomsData[0]?.id || '',
@@ -219,6 +243,7 @@ export default function ReservationsPage() {
           amount: parseCurrencyInput(form.amount || '0'),
           notes: form.notes,
           entryType: form.entryType,
+          addonIds: form.entryType === 'blocked' ? [] : form.addonIds,
         }),
       });
 
@@ -239,7 +264,8 @@ export default function ReservationsPage() {
         checkOut: '',
         amount: '',
         notes: '',
-          entryType: 'manual_reservation',
+        entryType: 'manual_reservation',
+        addonIds: [],
       });
       setSuccess('Reserva criada com sucesso no banco de dados.');
     } catch (submitError) {
@@ -380,9 +406,57 @@ export default function ReservationsPage() {
               value={form.amount}
               onChange={(event) => setForm((current) => ({ ...current, amount: formatCurrencyInput(event.target.value) }))}
               required={form.entryType !== 'blocked'}
-              placeholder="R$ 0,00"
+              placeholder="R$ 0,00 (diária/hospedagem)"
               className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none ring-sky-300 transition focus:ring"
             />
+
+            {addonsCatalog.length > 0 && form.entryType !== 'blocked' ? (
+              <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Adicionais (somados ao valor da reserva)
+                </p>
+                <div className="mt-2 space-y-1.5">
+                  {addonsCatalog.map((addon) => {
+                    const checked = form.addonIds.includes(addon.id);
+                    return (
+                      <label
+                        key={addon.id}
+                        className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-sm text-slate-300 hover:bg-white/5"
+                      >
+                        <span className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() =>
+                              setForm((current) => ({
+                                ...current,
+                                addonIds: checked
+                                  ? current.addonIds.filter((id) => id !== addon.id)
+                                  : [...current.addonIds, addon.id],
+                              }))
+                            }
+                            className="h-4 w-4 rounded border-white/20 bg-slate-950 accent-sky-500"
+                          />
+                          {addon.name}
+                        </span>
+                        <span className="text-slate-400">{formatCurrencyLabel(addon.price)}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {form.addonIds.length > 0 ? (
+                  <p className="mt-2 text-xs text-sky-300">
+                    + {formatCurrencyLabel(
+                      addonsCatalog
+                        .filter((addon) => form.addonIds.includes(addon.id))
+                        .reduce((sum, addon) => sum + addon.price, 0),
+                    )}{' '}
+                    em adicionais
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
             <textarea
               value={form.notes}
               onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
@@ -432,6 +506,11 @@ export default function ReservationsPage() {
                         {formatDateLabel(reservation.checkIn)} - {formatDateLabel(reservation.checkOut)}
                       </p>
                       <p className="mt-1 text-xs text-slate-500">{reservation.channelReference || 'Sem referência'}</p>
+                      {reservation.addons && reservation.addons.length > 0 ? (
+                        <p className="mt-1 text-xs text-sky-300">
+                          Adicionais: {reservation.addons.map((addon) => addon.name).join(', ')}
+                        </p>
+                      ) : null}
                     </div>
                   );
                 })

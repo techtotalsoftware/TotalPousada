@@ -6,6 +6,7 @@ import {
 } from "@/lib/tenant-session";
 import { getRooms } from "@/services/tenantService";
 import { toPublicUploadUrl } from "@/lib/uploads";
+import { getRoomLimit } from "@/lib/plan-enum";
 import {
   parseRoomPolicyArray,
   parseMaybeNumber,
@@ -207,6 +208,19 @@ export async function POST(request: Request) {
     }
 
     const { Room, Tenant } = await getDb();
+
+    const roomLimit = getRoomLimit(session.plan);
+    if (roomLimit !== null) {
+      const currentRoomCount = await Room.count({ where: { tenantId } });
+      if (currentRoomCount >= roomLimit) {
+        return NextResponse.json(
+          {
+            error: `Seu plano atual permite até ${roomLimit} quartos cadastrados. Faça upgrade de plano para cadastrar mais.`,
+          },
+          { status: 403 },
+        );
+      }
+    }
 
     await Tenant.findOrCreate({
       where: { id: tenantId },

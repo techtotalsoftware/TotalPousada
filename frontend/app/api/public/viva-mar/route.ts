@@ -74,6 +74,9 @@ export async function POST(request: Request) {
       notes: body.notes ?? "",
       couponCode: typeof body.couponCode === "string" ? body.couponCode : undefined,
       paymentReference: typeof body.paymentReference === "string" ? body.paymentReference : undefined,
+      addonIds: Array.isArray(body.addonIds)
+        ? body.addonIds.map((id: unknown) => Number(id)).filter((id: number) => Number.isInteger(id))
+        : undefined,
       createdByUserId: null,
     });
 

@@ -24,13 +24,18 @@ export type ReservationAttributes = {
   unitNumber: number | null;
   checkedInAt: Date | null;
   checkedOutAt: Date | null;
+  // Snapshot (JSON) dos adicionais vinculados no momento da reserva —
+  // [{ id, name, price }] — guardado à parte do catálogo `Addon` porque o
+  // preço/nome do adicional pode mudar depois e a reserva já paga precisa
+  // manter o valor histórico cobrado do hóspede.
+  addons: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 };
 
 export type ReservationCreationAttributes = Optional<
   ReservationAttributes,
-  "id" | "createdAt" | "updatedAt" | "unitNumber" | "checkedInAt" | "checkedOutAt"
+  "id" | "createdAt" | "updatedAt" | "unitNumber" | "checkedInAt" | "checkedOutAt" | "addons"
 >;
 
 export class Reservation
@@ -57,6 +62,7 @@ export class Reservation
   declare unitNumber: number | null;
   declare checkedInAt: Date | null;
   declare checkedOutAt: Date | null;
+  declare addons: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 
@@ -176,6 +182,11 @@ export class Reservation
           type: DataTypes.DATE,
           allowNull: true,
           field: "checked_out_at",
+        },
+        addons: {
+          type: DataTypes.TEXT,
+          allowNull: true,
+          defaultValue: null,
         },
       },
       {

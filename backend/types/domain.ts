@@ -63,6 +63,8 @@ export type Reservation = {
   // pelo calendário para desenhar reservas simultâneas do mesmo tipo de
   // quarto em "raias" separadas, em vez de uma sobrepor a outra visualmente.
   unitNumber?: number | null;
+  // Adicionais vinculados no momento da reserva (snapshot de preço/nome).
+  addons?: Array<{ id: number; name: string; price: number }>;
 };
 
 export type ExpenseCategory = 'limpeza' | 'manutenção' | 'impostos' | 'insumos' | 'comissões' | 'outros';

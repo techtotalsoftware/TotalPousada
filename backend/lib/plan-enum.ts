@@ -61,3 +61,18 @@ export function isValidPlan(
 ): plan is TenantPlan {
   return normalizeTenantPlan(plan) !== null;
 }
+
+/**
+ * Limite de quartos cadastráveis por plano — `null` significa sem limite.
+ * Alavanca clássica de upsell: uma pousada que cresce além da capacidade do
+ * plano atual precisa fazer upgrade. Ajuste estes números livremente.
+ */
+export const ROOM_LIMITS: Record<TenantPlan, number | null> = {
+  [TenantPlan.BASIC]: 8,
+  [TenantPlan.PREMIUM]: 25,
+  [TenantPlan.ENTERPRISE]: null,
+};
+
+export function getRoomLimit(plan: TenantPlan): number | null {
+  return ROOM_LIMITS[plan];
+}
