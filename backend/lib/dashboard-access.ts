@@ -1,22 +1,22 @@
-import type { Route } from 'next';
-import { TenantPlan, hasPlanAccess } from './plan-enum';
+import type { Route } from "next";
+import { TenantPlan, hasPlanAccess } from "./plan-enum";
 
 export type DashboardFeatureKey =
-  | 'calendar'
-  | 'calendar_management'
-  | 'promotions'
-  | 'addons'
-  | 'reservations'
-  | 'check'
-  | 'rooms'
-  | 'gallery'
-  | 'team'
-  | 'finance'
-  | 'guests'
-  | 'reports'
-  | 'audit';
+  | "calendar"
+  | "calendar_management"
+  | "promotions"
+  | "addons"
+  | "reservations"
+  | "check"
+  | "rooms"
+  | "gallery"
+  | "team"
+  | "finance"
+  | "guests"
+  | "reports"
+  | "audit";
 
-export type UserAccessRole = 'admin' | 'staff' | 'customer';
+export type UserAccessRole = "admin" | "staff" | "customer";
 
 export type DashboardNavItem = {
   key: DashboardFeatureKey;
@@ -27,82 +27,83 @@ export type DashboardNavItem = {
 
 export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   {
-    key: 'calendar',
-    href: '/dashboard/calendar',
-    label: 'Calendario',
-    description: 'Operacao e moderacao de reservas',
+    key: "calendar",
+    href: "/dashboard/calendar",
+    label: "Calendario",
+    description: "Operacao e moderacao de reservas",
   },
   {
-    key: 'calendar_management',
-    href: '/dashboard/calendar-management',
-    label: 'Calendario de gestao',
-    description: 'Fechamento de quartos e ajuste de tarifa',
+    key: "calendar_management",
+    href: "/dashboard/calendar-management",
+    label: "Calendario de gestao",
+    description: "Fechamento de quartos e ajuste de tarifa",
   },
   {
-    key: 'promotions',
-    href: '/dashboard/promotions',
-    label: 'Promocoes',
-    description: 'Gerenciamento de cupons e descontos',
+    key: "promotions",
+    href: "/dashboard/promotions",
+    label: "Promocoes",
+    description: "Gerenciamento de cupons e descontos",
   },
   {
-    key: 'addons',
-    href: '/dashboard/addons',
-    label: 'Pacotes & Adicionais',
-    description: 'Itens extras oferecidos na reserva (decoração, jantar, spa...)',
+    key: "addons",
+    href: "/dashboard/addons",
+    label: "Pacotes & Adicionais",
+    description:
+      "Itens extras oferecidos na reserva (decoração, jantar, spa...)",
   },
   {
-    key: 'reservations',
-    href: '/dashboard/reservations',
-    label: 'Reserva',
-    description: 'Cadastro e registro de reservas',
+    key: "reservations",
+    href: "/dashboard/reservations",
+    label: "Reserva",
+    description: "Cadastro e registro de reservas",
   },
   {
-    key: 'check',
-    href: '/dashboard/check',
-    label: 'Check-in e Check-out',
-    description: 'Fluxo operacional da recepcao',
+    key: "check",
+    href: "/dashboard/check",
+    label: "Check-in e Check-out",
+    description: "Fluxo operacional da recepcao",
   },
   {
-    key: 'rooms',
-    href: '/dashboard/rooms',
-    label: 'Quartos',
-    description: 'Status operacional e governanca',
+    key: "rooms",
+    href: "/dashboard/rooms",
+    label: "Quartos",
+    description: "Status operacional e governanca",
   },
   {
-    key: 'gallery',
-    href: '/dashboard/gallery',
-    label: 'Galeria',
-    description: 'Fotos gerais da pousada exibidas no site',
+    key: "gallery",
+    href: "/dashboard/gallery",
+    label: "Galeria",
+    description: "Fotos gerais da pousada exibidas no site",
   },
   {
-    key: 'team',
-    href: '/dashboard/team',
-    label: 'Equipe',
-    description: 'Escala, turnos e gestao de pessoas',
+    key: "team",
+    href: "/dashboard/team",
+    label: "Equipe",
+    description: "Escala, turnos e gestao de pessoas",
   },
   {
-    key: 'finance',
-    href: '/dashboard/finance',
-    label: 'Financeiro',
-    description: 'KPIs, despesas e margem liquida',
+    key: "finance",
+    href: "/dashboard/finance",
+    label: "Financeiro",
+    description: "KPIs, despesas e margem liquida",
   },
   {
-    key: 'guests',
-    href: '/dashboard/guests',
-    label: 'Historico de hospedes',
-    description: 'Dados cadastrais e historico de estadias',
+    key: "guests",
+    href: "/dashboard/guests",
+    label: "Historico de hospedes",
+    description: "Dados cadastrais e historico de estadias",
   },
   {
-    key: 'reports',
-    href: '/dashboard/reports',
-    label: 'Relatorios',
-    description: 'Ocupacao, receita e desempenho da pousada',
+    key: "reports",
+    href: "/dashboard/reports",
+    label: "Relatorios",
+    description: "Ocupacao, receita e desempenho da pousada",
   },
   {
-    key: 'audit',
-    href: '/dashboard/audit',
-    label: 'Auditoria',
-    description: 'Trilha de acoes realizadas pela equipe',
+    key: "audit",
+    href: "/dashboard/audit",
+    label: "Auditoria",
+    description: "Trilha de acoes realizadas pela equipe",
   },
 ];
 
@@ -112,7 +113,10 @@ const FEATURE_BY_KEY = new Map(
 
 // Plano mínimo de tenant exigido por funcionalidade — é um teto por pousada,
 // independente do papel/permissão do colaborador (ver resolveDashboardPermissionsForRole).
-export const FEATURE_PLAN_REQUIREMENTS: Record<DashboardFeatureKey, TenantPlan> = {
+export const FEATURE_PLAN_REQUIREMENTS: Record<
+  DashboardFeatureKey,
+  TenantPlan
+> = {
   reservations: TenantPlan.BASIC,
   rooms: TenantPlan.BASIC,
   calendar: TenantPlan.BASIC,
@@ -133,7 +137,7 @@ export const FEATURE_PLAN_REQUIREMENTS: Record<DashboardFeatureKey, TenantPlan> 
   calendar_management: TenantPlan.PREMIUM,
 
   // Essas funcionalidades só têm efeito prático através da landing page
-  // pública (cupom só é aplicado em /api/public/viva-mar; a galeria só é
+  // pública (cupom só é aplicado em /api/public/booking; a galeria só é
   // exibida via /api/public/gallery), então ficam no mesmo pacote — exclusivo
   // do plano Enterprise.
   promotions: TenantPlan.ENTERPRISE,
@@ -152,12 +156,12 @@ export function hasPlanAccessToFeature(
 }
 
 export const DEFAULT_STAFF_FEATURES: DashboardFeatureKey[] = [
-  'calendar',
-  'calendar_management',
-  'reservations',
-  'check',
-  'rooms',
-  'guests',
+  "calendar",
+  "calendar_management",
+  "reservations",
+  "check",
+  "rooms",
+  "guests",
 ];
 
 function asFeatureKey(value: string): DashboardFeatureKey | null {
@@ -166,7 +170,9 @@ function asFeatureKey(value: string): DashboardFeatureKey | null {
     : null;
 }
 
-export function parseStoredDashboardPermissions(raw: string | null | undefined): unknown {
+export function parseStoredDashboardPermissions(
+  raw: string | null | undefined,
+): unknown {
   if (!raw) {
     return [];
   }
@@ -188,7 +194,7 @@ export function sanitizeDashboardPermissions(
   const unique = new Set<DashboardFeatureKey>();
 
   for (const permission of permissions) {
-    if (typeof permission !== 'string') {
+    if (typeof permission !== "string") {
       continue;
     }
 
@@ -205,7 +211,7 @@ export function resolveDashboardPermissionsForRole(
   role: UserAccessRole,
   permissions: unknown,
 ): DashboardFeatureKey[] {
-  if (role === 'admin') {
+  if (role === "admin") {
     return DASHBOARD_NAV_ITEMS.map((item) => item.key);
   }
 
@@ -220,11 +226,28 @@ export function getVisibleDashboardNavItems(
   role: UserAccessRole,
   permissions: unknown,
 ): DashboardNavItem[] {
-  const allowed = new Set(resolveDashboardPermissionsForRole(role, permissions));
+  const allowed = new Set(
+    resolveDashboardPermissionsForRole(role, permissions),
+  );
 
   return DASHBOARD_NAV_ITEMS.filter(
     (item) => allowed.has(item.key) && hasPlanAccessToFeature(plan, item.key),
   );
+}
+
+export type LockedDashboardNavItem = DashboardNavItem & {
+  requiredPlan: TenantPlan;
+};
+
+export function getLockedDashboardNavItems(
+  plan: TenantPlan,
+): LockedDashboardNavItem[] {
+  return DASHBOARD_NAV_ITEMS.filter(
+    (item) => !hasPlanAccessToFeature(plan, item.key),
+  ).map((item) => ({
+    ...item,
+    requiredPlan: FEATURE_PLAN_REQUIREMENTS[item.key],
+  }));
 }
 
 export function canAccessDashboardPath(
@@ -233,7 +256,7 @@ export function canAccessDashboardPath(
   role: UserAccessRole,
   permissions: unknown,
 ): boolean {
-  if (pathname === '/dashboard') {
+  if (pathname === "/dashboard") {
     return true;
   }
 
@@ -260,5 +283,5 @@ export function getDefaultDashboardHref(
   // existe para fechar: um colaborador sem nenhuma permissão apontaria para
   // uma rota que ele também não pode acessar, e como pathname === destination
   // o middleware não redireciona de novo — deixando a página renderizar.
-  return firstAllowed?.href ?? '/dashboard';
+  return firstAllowed?.href ?? "/dashboard";
 }

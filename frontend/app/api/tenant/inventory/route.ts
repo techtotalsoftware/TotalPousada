@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db";
 import { getAvailableRooms } from "@/services/tenantService";
 import { getVerifiedTenantSession, hasFeatureAccess } from "@/lib/tenant-session";
 import { logError } from "@/lib/logger";
+import { getRoomLimit } from "@/lib/plan-enum";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -21,6 +22,8 @@ export async function GET() {
     const rooms = await getAvailableRooms(tenantId);
 
     const { Reservation, Room } = await getDb();
+    const roomCount = await Room.count({ where: { tenantId } });
+    const roomLimit = getRoomLimit(session.plan);
 
     // 1. MUDANÇA: Agora pedimos para o banco trazer os dados do Quarto (Room) junto com a Reserva
     const dbReservations = await Reservation.findAll({
@@ -72,6 +75,9 @@ export async function GET() {
       {
         rooms,
         reservations,
+        plan: session.plan,
+        roomCount,
+        roomLimit,
       },
       {
         status: 200,

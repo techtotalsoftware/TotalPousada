@@ -38,7 +38,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error: any) {
-    logError("Erro no GET Viva Mar:", error);
+    logError("Erro no GET de disponibilidade pública:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       headers: corsHeaders,
     });
   } catch (error) {
-    logError("Erro no POST Viva Mar:", error);
+    logError("Erro no POST de reserva pública:", error);
     return NextResponse.json(
       {
         error:

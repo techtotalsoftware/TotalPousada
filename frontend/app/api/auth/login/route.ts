@@ -15,13 +15,6 @@ import {
   getClientIp,
   rateLimitResponse,
 } from "@/lib/rate-limit";
-import {
-  DEMO_TENANT_ID,
-  DEMO_TENANT_NAME,
-  DEMO_USER_EMAIL,
-  DEMO_USER_PASSWORD,
-} from "@/services/demoData";
-import { TenantPlan } from "@/lib/plan-enum";
 
 function parseDashboardPermissions(raw: string | null | undefined) {
   if (!raw) return [];
@@ -64,34 +57,6 @@ export async function POST(request: Request) {
   });
   if (!emailLimit.allowed)
     return rateLimitResponse(emailLimit.retryAfterSeconds);
-
-  const demoLoginEnabled =
-    process.env.NODE_ENV !== "production" ||
-    process.env.ENABLE_DEMO_LOGIN === "true";
-  if (
-    demoLoginEnabled &&
-    email === DEMO_USER_EMAIL &&
-    body.password === DEMO_USER_PASSWORD
-  ) {
-    const token = await createSessionToken({
-      userId: -1,
-      tenantId: DEMO_TENANT_ID,
-      plan: TenantPlan.PREMIUM,
-      tenantName: DEMO_TENANT_NAME,
-      role: "admin",
-      permissions: [],
-      active: true,
-    });
-    const response = NextResponse.json({ ok: true });
-    response.cookies.set(authConfig.cookieName, token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: secureCookie,
-      path: "/",
-      maxAge: authConfig.tokenTtlSeconds,
-    });
-    return response;
-  }
 
   const tenantSlug = extractTenantSlug(email);
   if (!tenantSlug) {

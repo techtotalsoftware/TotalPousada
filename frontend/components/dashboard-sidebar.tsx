@@ -6,26 +6,36 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BadgePercent,
+  BarChart3,
   BedDouble,
   CalendarRange,
   CalendarCog,
   CalendarPlus2,
   ClipboardCheck,
+  Gift,
   History,
+  ImageIcon,
   Landmark,
+  Lock,
   Menu,
   PanelLeft,
   PanelLeftClose,
+  ScrollText,
   UsersRound,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { TenantPlan } from "@/lib/plan-enum";
 
 type NavItem = {
   href: Route;
   label: string;
   description: string;
+};
+
+type LockedNavItem = NavItem & {
+  requiredPlan: TenantPlan;
 };
 
 const ICONS: Record<string, LucideIcon> = {
@@ -38,6 +48,10 @@ const ICONS: Record<string, LucideIcon> = {
   "/dashboard/team": UsersRound,
   "/dashboard/finance": Landmark,
   "/dashboard/guests": History,
+  "/dashboard/gallery": ImageIcon,
+  "/dashboard/addons": Gift,
+  "/dashboard/reports": BarChart3,
+  "/dashboard/audit": ScrollText,
 };
 
 const COLLAPSED_STORAGE_KEY = "dashboard-sidebar-collapsed";
@@ -45,9 +59,11 @@ const COLLAPSED_STORAGE_KEY = "dashboard-sidebar-collapsed";
 export function DashboardSidebar({
   tenantName,
   navItems,
+  lockedNavItems = [],
 }: {
   tenantName: string;
   navItems: NavItem[];
+  lockedNavItems?: LockedNavItem[];
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -135,13 +151,49 @@ export function DashboardSidebar({
     </nav>
   );
 
+  const lockedLinks =
+    lockedNavItems.length > 0 ? (
+      <div className={cn("mt-6 space-y-3", collapsed && "lg:hidden")}>
+        <p className="px-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+          Disponível em planos superiores
+        </p>
+        {lockedNavItems.map((item) => {
+          const Icon = ICONS[item.href] ?? CalendarRange;
+
+          return (
+            <div
+              key={item.href}
+              title={`Disponível no plano ${item.requiredPlan}`}
+              className="flex cursor-not-allowed items-center gap-3 rounded-[24px] border border-dashed border-slate-200 bg-slate-50/60 px-4 py-4 opacity-70 dark:border-white/10 dark:bg-slate-950/20"
+            >
+              <div className="rounded-2xl bg-slate-100 p-3 text-slate-400 dark:bg-slate-800/60 dark:text-slate-500">
+                <Icon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-slate-600 dark:text-slate-300">
+                  {item.label}
+                </p>
+                <p className="truncate text-sm text-slate-400 dark:text-slate-500">
+                  {item.description}
+                </p>
+              </div>
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-200/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <Lock className="h-3 w-3" />
+                {item.requiredPlan}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    ) : null;
+
   return (
     <>
       {/* Barra com hambúrguer — somente mobile/tablet */}
       <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white/85 px-4 py-3 shadow-lg backdrop-blur dark:border-white/10 dark:bg-slate-900/85 lg:hidden">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-sky-600 dark:text-sky-300">
-            Pousada Viva Mar
+            Total Pousada
           </p>
           <p className="text-sm font-semibold text-slate-900 dark:text-white">
             {tenantName}
@@ -175,6 +227,7 @@ export function DashboardSidebar({
             </div>
             {header}
             {navLinks}
+            {lockedLinks}
           </aside>
         </div>
       )}
@@ -204,6 +257,7 @@ export function DashboardSidebar({
 
         {!collapsed && header}
         {navLinks}
+        {lockedLinks}
       </aside>
     </>
   );

@@ -1,6 +1,6 @@
-# Pousada Viva Mar - ADMIN
+# Total Pousada
 
-SaaS de gestão para a Pousada Viva Mar: reservas, quartos, calendário, financeiro, equipe e hóspedes.
+SaaS multi-tenant de gestão para pousadas: reservas, quartos, calendário, financeiro, equipe e hóspedes.
 
 ## Estrutura
 
@@ -38,10 +38,8 @@ backend/
   models/             modelos Sequelize (MySQL)
   services/
     tenantService.ts    acesso a dados por tenant
-    demoData.ts         dados de demonstração (tenant/usuário fixos)
   types/
     domain.ts           tipos de domínio (Room, Reservation, Expense...)
-  mocks/              dados de demonstração usados em dev
 ```
 
 ## Autenticação e autorização
@@ -50,7 +48,7 @@ backend/
 - `middleware.ts` só protege `/dashboard/*` para fins de navegação; rotas de API se autenticam sozinhas.
 - Rotas em `app/api/tenant/**` usam `lib/tenant-session.ts` (`getVerifiedTenantSession`), que reconsulta usuário/tenant no banco a cada chamada — desativar um colaborador ou mudar suas permissões tem efeito imediato nas rotas de API, mesmo com o token do cookie ainda válido.
 - Controle de acesso por feature (`calendar`, `reservations`, `finance`, `team`, etc.) fica em `lib/dashboard-access.ts`.
-- Existe um login de demonstração hardcoded (`mocks/demoData.ts`) usado só para apresentações — não é um usuário real do banco.
+- Não existe login de demonstração — todo acesso passa por um usuário real de um tenant no banco. Isso é proposital: elimina qualquer chance de alguém acessar o painel sem ter pago.
 
 ## Banco de dados
 

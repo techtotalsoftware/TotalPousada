@@ -102,6 +102,7 @@ export default function RoomsPage() {
   const [selectedSnapshotByGroup, setSelectedSnapshotByGroup] = useState<Record<string, string>>({});
   const [loadingSnapshots, setLoadingSnapshots] = useState(true);
   const [rooms, setRooms] = useState<RoomData[]>([]);
+  const [roomLimit, setRoomLimit] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -493,6 +494,9 @@ export default function RoomsPage() {
       const res = await fetch('/api/tenant/inventory');
       const data = await res.json();
       if (data.rooms) setRooms(data.rooms);
+      if (typeof data.roomLimit === 'number' || data.roomLimit === null) {
+        setRoomLimit(data.roomLimit);
+      }
     } catch (error) {
       console.error('Erro ao carregar quartos:', error);
       showToast('Erro ao carregar quartos');
@@ -805,6 +809,49 @@ export default function RoomsPage() {
           </div>
         </div>
       </section>
+
+      {/* ROOM LIMIT USAGE */}
+      {roomLimit !== null ? (
+        (() => {
+          const used = rooms.length;
+          const ratio = roomLimit > 0 ? used / roomLimit : 1;
+          const atLimit = used >= roomLimit;
+          const nearLimit = !atLimit && ratio >= 0.7;
+          const barColor = atLimit
+            ? 'bg-rose-400'
+            : nearLimit
+              ? 'bg-amber-400'
+              : 'bg-sky-400';
+          const textColor = atLimit
+            ? 'text-rose-200'
+            : nearLimit
+              ? 'text-amber-200'
+              : 'text-slate-300';
+
+          return (
+            <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className={`text-sm font-medium ${textColor}`}>
+                  {used} de {roomLimit} quartos usados no seu plano
+                </p>
+                {atLimit || nearLimit ? (
+                  <p className="text-xs text-slate-400">
+                    {atLimit
+                      ? 'Limite atingido — faça upgrade de plano para cadastrar mais quartos.'
+                      : 'Você está perto do limite do seu plano.'}
+                  </p>
+                ) : null}
+              </div>
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                <div
+                  className={`h-full rounded-full transition-all ${barColor}`}
+                  style={{ width: `${Math.min(ratio, 1) * 100}%` }}
+                />
+              </div>
+            </section>
+          );
+        })()
+      ) : null}
 
       {/* STATUS TOTALS */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">

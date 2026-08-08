@@ -4,13 +4,9 @@ import { motion } from "framer-motion";
 import { LoaderCircle, LockKeyhole, Mail } from "lucide-react";
 import { FormEvent, useState } from "react";
 
-const SHOW_DEMO_LOGIN = process.env.NEXT_PUBLIC_SHOW_DEMO_LOGIN === "true";
-const DEMO_EMAIL = "gestao@pousadavivamar.com";
-const DEMO_PASSWORD = "vivamar123";
-
 export function LoginForm() {
-  const [email, setEmail] = useState(SHOW_DEMO_LOGIN ? DEMO_EMAIL : "");
-  const [password, setPassword] = useState(SHOW_DEMO_LOGIN ? DEMO_PASSWORD : "");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -60,7 +56,7 @@ export function LoginForm() {
           <span className="mb-2 block text-sm font-medium text-slate-200">E-mail</span>
           <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
             <Mail className="h-4 w-4 text-slate-400" />
-            <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500" placeholder="vinicius@vivamar" required />
+            <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500" placeholder="usuario@suapousada" required />
           </div>
         </label>
         <label className="block">
@@ -76,7 +72,6 @@ export function LoginForm() {
         {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
         Acessar painel
       </motion.button>
-      {SHOW_DEMO_LOGIN ? <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300"><p className="font-medium text-white">Acesso de demonstração</p><p>E-mail: {DEMO_EMAIL}</p><p>Senha: {DEMO_PASSWORD}</p></div> : null}
     </motion.form>
   );
 }

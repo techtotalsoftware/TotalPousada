@@ -1,9 +1,6 @@
 import { getDb } from "@/lib/db";
 import { toPublicUploadUrl } from "@/lib/uploads";
-import {
-  DEMO_TENANT_ID,
-  getDemoRooms,
-} from "@/services/demoData";
+import { logError } from "@/lib/logger";
 import { BED_TYPES, type BedType, type Expense, type Reservation, type Room, type RoomBed } from "@/types/domain";
 import { Op } from "sequelize";
 import {
@@ -218,21 +215,9 @@ export async function getRooms(tenantId: number): Promise<Room[]> {
       order: [["name", "ASC"]],
     });
 
-    if (rooms.length > 0) {
-      return rooms.map((room) => mapRoom(room));
-    }
-
-    if (tenantId === DEMO_TENANT_ID) {
-      return getDemoRooms();
-    }
-
-    return [];
+    return rooms.map((room) => mapRoom(room));
   } catch (error) {
-    console.error("[tenantService] Falha ao carregar quartos:", error);
-    if (tenantId === DEMO_TENANT_ID) {
-      return getDemoRooms();
-    }
-
+    logError("[tenantService] Falha ao carregar quartos:", error);
     return [];
   }
 }

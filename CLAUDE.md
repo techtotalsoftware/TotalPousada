@@ -80,12 +80,12 @@ ser avaliado contra os riscos abaixo antes de considerar a tarefa concluída
   com os campos esperados (evita que o cliente injete `tenantId`, `role`,
   `id` ou outro campo sensível que não deveria poder setar).
 - Validar tipo e formato de todo input de rota pública antes de usar (já é o
-  padrão em `validate-coupon`, `viva-mar` etc. — manter).
+  padrão em `validate-coupon`, `booking` etc. — manter).
 
 **Exposição de dados**
 - Nunca devolver em uma resposta de API campos internos que o client não
   precisa (senha/hash, tokens, IDs internos de outro sistema) — ver
-  `removeInternalRoomFields` em `app/api/public/viva-mar/route.ts` como
+  `removeInternalRoomFields` em `app/api/public/booking/route.ts` como
   padrão a seguir.
 - `logError`/`logWarn` (`lib/logger.ts`) não devem receber senha, token de
   sessão, segredo de webhook ou payload bruto de cartão/pagamento — logar
@@ -99,7 +99,7 @@ ser avaliado contra os riscos abaixo antes de considerar a tarefa concluída
   criação de reserva, validação de cupom, cadastro) passa por
   `checkRateLimit` (`lib/rate-limit.ts`) — ao adicionar uma rota pública
   nova nessa categoria, replicar o padrão já usado em
-  `app/api/public/viva-mar/route.ts` e `validate-coupon/route.ts`.
+  `app/api/public/booking/route.ts` e `validate-coupon/route.ts`.
 - Upload de arquivo (galeria, fotos de quarto) deve validar tipo/tamanho no
   servidor, não só no client.
 
