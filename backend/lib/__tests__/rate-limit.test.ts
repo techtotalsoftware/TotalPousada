@@ -40,11 +40,11 @@ describe("checkRateLimit", () => {
 });
 
 describe("getClientIp", () => {
-  it("prefers x-forwarded-for, taking the first entry", () => {
+  it("prefers x-forwarded-for, taking the last entry (appended by the trusted reverse proxy)", () => {
     const request = new Request("http://localhost", {
       headers: { "x-forwarded-for": "10.0.0.1, 10.0.0.2" },
     });
-    expect(getClientIp(request)).toBe("10.0.0.1");
+    expect(getClientIp(request)).toBe("10.0.0.2");
   });
 
   it("falls back to x-real-ip when x-forwarded-for is absent", () => {

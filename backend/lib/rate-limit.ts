@@ -25,9 +25,18 @@ function cleanupExpired(now: number) {
   }
 }
 
+// Assume que a aplicação só é alcançável através de um único proxy reverso
+// confiável (nginx no VPS), nunca diretamente da internet. Nesse cenário,
+// o último IP da cadeia X-Forwarded-For é o que o nginx anexou (o IP real do
+// cliente que conectou nele) — os IPs anteriores, se houver, podem ter sido
+// forjados pelo próprio cliente e não são confiáveis. Usar o primeiro valor
+// (como antes) permitia burlar o rate limit variando o header a cada request.
 export function getClientIp(request: Request): string {
   const forwardedFor = request.headers.get('x-forwarded-for');
-  if (forwardedFor) return forwardedFor.split(',')[0].trim();
+  if (forwardedFor) {
+    const parts = forwardedFor.split(',').map((part) => part.trim()).filter(Boolean);
+    if (parts.length > 0) return parts[parts.length - 1];
+  }
 
   const realIp = request.headers.get('x-real-ip');
   if (realIp) return realIp.trim();

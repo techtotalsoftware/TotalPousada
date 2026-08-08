@@ -5,7 +5,8 @@ import type { Transaction } from "sequelize";
 import { TenantPlan, normalizeTenantPlan } from "@/lib/plan-enum";
 import { getDb } from "@/lib/db";
 import { slugify } from "@/lib/tenant-slug";
-import { logError } from "@/lib/logger";
+import { logError, logWarn } from "@/lib/logger";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 const validPlans: TenantPlan[] = [
   TenantPlan.BASIC,
@@ -42,8 +43,22 @@ function extractTenantSlug(email: string) {
 }
 
 export async function POST(request: Request) {
+  // Endpoint chamado pelo site de pagamento externo, mas exposto na
+  // internet como qualquer outra rota: sem limite, o segredo do webhook
+  // poderia ser atacado por força bruta sem restrição.
+  const ipLimit = checkRateLimit(getClientIp(request), "provision-webhook", {
+    limit: 5,
+    windowMs: 60_000,
+  });
+  if (!ipLimit.allowed) {
+    return rateLimitResponse(ipLimit.retryAfterSeconds);
+  }
+
   const payload = (await request.json()) as ProvisionPayload;
   if (!isValidWebhookSecret(payload.webhookSecret)) {
+    logWarn("Provision webhook: tentativa com segredo inválido", {
+      ip: getClientIp(request),
+    });
     return NextResponse.json({ message: "Webhook inválido." }, { status: 401 });
   }
 

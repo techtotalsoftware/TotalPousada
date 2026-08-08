@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ToastProvider } from "@/components/toast-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { CookieConsent } from "@/components/cookie-consent";
 
 export const metadata: Metadata = {
   title: "Total Pousada | Gerenciamento interno",
@@ -26,6 +27,7 @@ export default function RootLayout({
             <ThemeToggle />
           </div>
           {children}
+          <CookieConsent />
         </ToastProvider>
       </body>
     </html>

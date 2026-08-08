@@ -35,20 +35,6 @@ export async function getVerifiedTenantSession(): Promise<VerifiedTenantSession 
     return null;
   }
 
-  // O usuário demo não existe na tabela users; seu payload é fixo e não tem
-  // estado (permissões/ativação) que possa ficar obsoleto.
-  if (session.userId < 0) {
-    return {
-      userId: session.userId,
-      tenantId: session.tenantId,
-      tenantName: session.tenantName,
-      userName: "Usuário demo",
-      plan: session.plan,
-      role: session.role,
-      permissions: session.permissions,
-    };
-  }
-
   const { User, Tenant } = await getDb();
   const user = await User.findOne({
     where: { id: session.userId },
