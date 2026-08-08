@@ -5,6 +5,7 @@ import {
   hasFeatureAccess,
 } from "@/lib/tenant-session";
 import { getGalleryPhotos } from "@/services/tenantService";
+import { logError } from "@/lib/logger";
 
 const MAX_PHOTOS_PER_TENANT = 60;
 
@@ -36,7 +37,7 @@ export async function GET() {
     const photos = await getGalleryPhotos(session.tenantId);
     return NextResponse.json(photos, { status: 200 });
   } catch (error: any) {
-    console.error("Erro ao buscar galeria:", error);
+    logError("Erro ao buscar galeria:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -115,7 +116,7 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch (error: any) {
-    console.error("Erro ao adicionar foto à galeria:", error);
+    logError("Erro ao adicionar foto à galeria:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

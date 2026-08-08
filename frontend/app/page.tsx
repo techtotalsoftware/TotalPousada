@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { CalendarDays, ConciergeBell, ShieldCheck } from 'lucide-react';
 import { LoginForm } from '@/components/login-form';
 
@@ -46,8 +47,19 @@ export default function LoginPage() {
         </div>
       </section>
 
-      <section className="flex flex-1 justify-center lg:justify-end">
+      <section className="flex flex-1 flex-col items-center gap-4 lg:items-end lg:justify-end">
         <LoginForm />
+        <p className="text-xs text-slate-400">
+          Ao continuar, você concorda com nossos{' '}
+          <Link href="/termos" className="text-sky-400 hover:underline">
+            Termos de Uso
+          </Link>{' '}
+          e nossa{' '}
+          <Link href="/privacidade" className="text-sky-400 hover:underline">
+            Política de Privacidade
+          </Link>
+          .
+        </p>
       </section>
     </main>
   );

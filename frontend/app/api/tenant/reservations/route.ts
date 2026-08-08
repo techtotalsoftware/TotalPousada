@@ -8,6 +8,7 @@ import {
 } from "@/services/tenantService";
 import type { Reservation } from "@/types/domain";
 import { logAuditEvent } from "@/lib/audit";
+import { logError } from "@/lib/logger";
 
 export async function PATCH(request: Request) {
   const session = await getVerifiedTenantSession();
@@ -80,7 +81,7 @@ export async function GET() {
 
     return NextResponse.json(payload, { status: 200 });
   } catch (error: any) {
-    console.error("Erro ao buscar reservas do SaaS:", error);
+    logError("Erro ao buscar reservas do SaaS:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

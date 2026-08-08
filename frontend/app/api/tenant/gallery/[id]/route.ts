@@ -4,6 +4,7 @@ import { unlink } from "fs/promises";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getVerifiedTenantSession, hasFeatureAccess } from "@/lib/tenant-session";
+import { logError } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -59,7 +60,7 @@ export async function PATCH(
       { status: 200 },
     );
   } catch (error: any) {
-    console.error("Erro ao atualizar foto da galeria:", error);
+    logError("Erro ao atualizar foto da galeria:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -97,7 +98,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error: any) {
-    console.error("Erro ao remover foto da galeria:", error);
+    logError("Erro ao remover foto da galeria:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -125,12 +125,17 @@ export default function PromotionsPage() {
     if (couponToDelete === null) return;
     setIsDeletingCoupon(true);
     try {
-      await fetch(`/api/tenant/coupons/${couponToDelete}`, { method: "DELETE" });
+      const res = await fetch(`/api/tenant/coupons/${couponToDelete}`, { method: "DELETE" });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        showToast(errorData.error ? `Erro: ${errorData.error}` : "Erro ao excluir cupom.");
+        return;
+      }
       setCouponToDelete(null);
       fetchData();
       showToast("Cupom excluído com sucesso.");
     } catch (error) {
-      showToast("Erro ao excluir cupom.");
+      showToast("Erro de conexão ao excluir cupom.");
     } finally {
       setIsDeletingCoupon(false);
     }

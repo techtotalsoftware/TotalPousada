@@ -122,12 +122,16 @@ export default function AddonsPage() {
     if (addonToDelete === null) return;
     setIsDeletingAddon(true);
     try {
-      await fetch(`/api/tenant/addons/${addonToDelete}`, { method: "DELETE" });
+      const res = await fetch(`/api/tenant/addons/${addonToDelete}`, { method: "DELETE" });
+      if (!res.ok) {
+        showToast("Erro ao excluir pacote.");
+        return;
+      }
       setAddonToDelete(null);
       fetchData();
       showToast("Pacote excluído com sucesso.");
     } catch (error) {
-      showToast("Erro ao excluir pacote.");
+      showToast("Erro de conexão ao excluir pacote.");
     } finally {
       setIsDeletingAddon(false);
     }

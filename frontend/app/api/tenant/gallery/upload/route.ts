@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 
 import { getVerifiedTenantSession, hasFeatureAccess } from "@/lib/tenant-session";
 import { detectImageMimeFromBuffer } from "@/lib/file-signature";
+import { logError } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ urls }, { status: 201 });
   } catch (error: any) {
-    console.error("Erro ao fazer upload de fotos da galeria:", error);
+    logError("Erro ao fazer upload de fotos da galeria:", error);
     return NextResponse.json({ error: error?.message || "Erro ao fazer upload" }, { status: 500 });
   }
 }

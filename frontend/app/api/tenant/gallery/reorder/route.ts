@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getVerifiedTenantSession, hasFeatureAccess } from "@/lib/tenant-session";
+import { logError } from "@/lib/logger";
 
 export async function PATCH(request: Request) {
   try {
@@ -44,7 +45,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error: any) {
-    console.error("Erro ao reordenar galeria:", error);
+    logError("Erro ao reordenar galeria:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

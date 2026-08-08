@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getVerifiedTenantSession, hasFeatureAccess } from "@/lib/tenant-session";
+import { logError } from "@/lib/logger";
 
 const VALID_STATUSES = [
   "vacant",
@@ -75,7 +76,7 @@ export async function PATCH(
 
     return NextResponse.json({ ok: true });
   } catch (error: any) {
-    console.error("Erro ao atualizar status da unidade:", error);
+    logError("Erro ao atualizar status da unidade:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

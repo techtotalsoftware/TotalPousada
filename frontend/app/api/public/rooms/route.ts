@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAvailableRooms } from "@/services/tenantService";
 import { hasPublicSiteAccess, resolvePublicTenantId } from "@/lib/public-tenant";
+import { logError } from "@/lib/logger";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
       headers: corsHeaders,
     });
   } catch (error: any) {
-    console.error("Erro ao buscar quartos públicos:", error);
+    logError("Erro ao buscar quartos públicos:", error);
     return NextResponse.json(
       { error: error.message ?? "Erro interno ao buscar quartos" },
       { status: 500, headers: corsHeaders },

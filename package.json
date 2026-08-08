@@ -7,7 +7,8 @@
     "build": "cd frontend && node ../node_modules/next/dist/bin/next build",
     "start": "cd frontend && node --env-file=../.env ../node_modules/next/dist/bin/next start",
     "lint": "cd frontend && node ../node_modules/next/dist/bin/next lint",
-    "typecheck": "cd frontend && node ../node_modules/typescript/bin/tsc --noEmit"
+    "typecheck": "cd frontend && node ../node_modules/typescript/bin/tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -19,7 +20,8 @@
     "pdf-lib": "^1.17.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "sequelize": "^6.37.5"
+    "sequelize": "^6.37.5",
+    "umzug": "^3.8.3"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
@@ -28,6 +30,7 @@
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.16",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^4.1.10"
   }
 }

@@ -14,6 +14,7 @@ import {
   type RoomSeasonalRate,
 } from "@/lib/room-policies";
 import { BED_TYPES, type BedType, type RoomBed } from "@/types/domain";
+import { logError } from "@/lib/logger";
 
 function sanitizeStringArray(input: unknown) {
   if (!Array.isArray(input)) {
@@ -140,7 +141,7 @@ export async function GET() {
 
     return NextResponse.json(rooms, { status: 200 });
   } catch (error: any) {
-    console.error("Erro ao buscar quartos:", error);
+    logError("Erro ao buscar quartos:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -277,7 +278,7 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch (error: any) {
-    console.error("Erro ao criar quarto:", error);
+    logError("Erro ao criar quarto:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

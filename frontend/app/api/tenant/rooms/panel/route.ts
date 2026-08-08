@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { Op } from "sequelize";
 import { getVerifiedTenantSession, hasFeatureAccess } from "@/lib/tenant-session";
+import { logError } from "@/lib/logger";
 
 type OperationalStatus =
   | "vacant"
@@ -147,7 +148,7 @@ export async function GET() {
 
     return NextResponse.json({ snapshots });
   } catch (error: any) {
-    console.error("Erro ao buscar painel de quartos:", error);
+    logError("Erro ao buscar painel de quartos:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

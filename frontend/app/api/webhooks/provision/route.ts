@@ -5,6 +5,7 @@ import type { Transaction } from "sequelize";
 import { TenantPlan, normalizeTenantPlan } from "@/lib/plan-enum";
 import { getDb } from "@/lib/db";
 import { slugify } from "@/lib/tenant-slug";
+import { logError } from "@/lib/logger";
 
 const validPlans: TenantPlan[] = [
   TenantPlan.BASIC,
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ ok: true, slug }, { status: 201 });
   } catch (error) {
-    console.error("Provision webhook error:", error);
+    logError("Provision webhook error:", error);
     if (
       error instanceof Error &&
       error.message === "TENANT_SLUG_ALREADY_EXISTS"

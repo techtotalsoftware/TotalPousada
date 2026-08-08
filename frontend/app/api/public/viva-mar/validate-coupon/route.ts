@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { hasPublicSiteAccess, resolvePublicTenantId } from "@/lib/public-tenant";
+import { logError } from "@/lib/logger";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
+    // Endpoint público e não autenticado: sem limite, um atacante poderia
+    // testar códigos de cupom em sequência (brute force) sem custo nenhum.
+    const ipLimit = checkRateLimit(getClientIp(request), "validate-coupon", {
+      limit: 20,
+      windowMs: 60_000,
+    });
+    if (!ipLimit.allowed) return rateLimitResponse(ipLimit.retryAfterSeconds);
+
     const body = await request.json();
     const { code } = body;
 
@@ -66,7 +76,7 @@ export async function POST(request: Request) {
       },
     );
   } catch (error: any) {
-    console.error("Erro ao validar cupom:", error);
+    logError("Erro ao validar cupom:", error);
     return NextResponse.json(
       { error: "Erro interno ao validar cupom." },
       { status: 500 },

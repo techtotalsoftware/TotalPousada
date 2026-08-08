@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getAvailableRooms } from "@/services/tenantService";
 import { getVerifiedTenantSession, hasFeatureAccess } from "@/lib/tenant-session";
+import { logError } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -82,7 +83,7 @@ export async function GET() {
       },
     );
   } catch (error: any) {
-    console.error("Erro no Inventory:", error);
+    logError("Erro no Inventory:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

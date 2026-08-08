@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getAvailableRooms } from "@/services/tenantService";
 import { createPublicReservation } from "@/actions/reservation";
 import { hasPublicSiteAccess, resolvePublicTenantId } from "@/lib/public-tenant";
+import { logError } from "@/lib/logger";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 function removeInternalRoomFields(room: Record<string, unknown>) {
   const { channexRoomTypeId: _channexRoomTypeId, ...publicRoom } = room;
@@ -36,7 +38,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error: any) {
-    console.error("Erro no GET Viva Mar:", error);
+    logError("Erro no GET Viva Mar:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -52,6 +54,19 @@ export async function POST(request: Request) {
   };
 
   try {
+    // Endpoint público e não autenticado que grava no banco: sem limite,
+    // um script poderia gerar reservas em massa (spam/DoS de escrita).
+    const ipLimit = checkRateLimit(getClientIp(request), "public-reservation", {
+      limit: 10,
+      windowMs: 60_000,
+    });
+    if (!ipLimit.allowed) {
+      return NextResponse.json(
+        { error: "Muitas tentativas. Aguarde um momento e tente novamente." },
+        { status: 429, headers: { ...corsHeaders, "Retry-After": String(ipLimit.retryAfterSeconds) } },
+      );
+    }
+
     const tenantId = await resolvePublicTenantId(request);
 
     if (!tenantId || !(await hasPublicSiteAccess(tenantId))) {
@@ -85,7 +100,7 @@ export async function POST(request: Request) {
       headers: corsHeaders,
     });
   } catch (error) {
-    console.error("Erro no POST Viva Mar:", error);
+    logError("Erro no POST Viva Mar:", error);
     return NextResponse.json(
       {
         error:

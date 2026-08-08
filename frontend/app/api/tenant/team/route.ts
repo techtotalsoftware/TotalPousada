@@ -14,6 +14,7 @@ import {
 import { getDb } from "@/lib/db";
 import { TenantPlan } from "@/lib/plan-enum";
 import { logAuditEvent } from "@/lib/audit";
+import { logError } from "@/lib/logger";
 
 const TEAM_ROLE_OPTIONS = [
   "Recepcao",
@@ -281,7 +282,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, email: fullEmail }, { status: 201 });
   } catch (error) {
-    console.error("Erro ao cadastrar colaborador:", error);
+    logError("Erro ao cadastrar colaborador:", error);
 
     if (error instanceof Error && /unique/i.test(error.message)) {
       return NextResponse.json(
@@ -319,7 +320,7 @@ export async function POST(request: Request) {
           { status: 201 },
         );
       } catch (fallbackError) {
-        console.error(
+        logError(
           "Erro no fallback de cadastro de colaborador:",
           fallbackError,
         );

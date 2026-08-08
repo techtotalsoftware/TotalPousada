@@ -4,6 +4,7 @@ import { getVerifiedTenantSession, hasFeatureAccess } from "@/lib/tenant-session
 import { parseMaybeNumber, parseRoomPolicyArray, type RoomClosurePeriod, type RoomSeasonalRate } from "@/lib/room-policies";
 import { toPublicUploadUrl } from "@/lib/uploads";
 import { BED_TYPES, type BedType, type RoomBed } from "@/types/domain";
+import { logError } from "@/lib/logger";
 
 function sanitizeStringArray(input: unknown) {
   if (!Array.isArray(input)) {
@@ -255,7 +256,7 @@ export async function PATCH(
       { status: 200 },
     );
   } catch (error: any) {
-    console.error("Erro ao atualizar quarto:", error);
+    logError("Erro ao atualizar quarto:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -301,7 +302,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error: any) {
-    console.error("Erro ao remover quarto:", error);
+    logError("Erro ao remover quarto:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { hasPublicSiteAccess, resolvePublicTenantId } from "@/lib/public-tenant";
+import { logError } from "@/lib/logger";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(publicAddons, { status: 200, headers: corsHeaders });
   } catch (error: any) {
-    console.error("Erro ao buscar pacotes/adicionais públicos:", error);
+    logError("Erro ao buscar pacotes/adicionais públicos:", error);
     return NextResponse.json(
       { error: error.message ?? "Erro interno ao buscar pacotes" },
       { status: 500, headers: corsHeaders },
