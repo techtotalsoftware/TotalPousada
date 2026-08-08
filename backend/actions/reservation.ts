@@ -15,6 +15,9 @@ import {
   getRoomMinimumStay,
   type RoomSeasonalRate,
 } from "../lib/room-policies";
+import { sendMail } from "../lib/mailer";
+import { buildReservationConfirmationEmail } from "../lib/emails/reservation-emails";
+import { logError } from "../lib/logger";
 
 type ManualReservationInput = {
   roomId: string;
@@ -145,6 +148,35 @@ function mapReservationToDomain(
   };
 }
 
+// Best-effort: dispara o e-mail de confirmação sem bloquear nem falhar a
+// criação da reserva se o SMTP estiver indisponível ou não configurado.
+async function notifyReservationConfirmation(
+  tenantId: number,
+  roomName: string,
+  reservation: Reservation,
+) {
+  try {
+    const { Tenant } = await getDb();
+    const tenant = await Tenant.findByPk(tenantId, { attributes: ["name"] });
+    if (!tenant || !reservation.customer.email) {
+      return;
+    }
+
+    const email = buildReservationConfirmationEmail({
+      tenantName: tenant.name,
+      guestName: reservation.customer.name,
+      roomName,
+      checkIn: reservation.checkIn,
+      checkOut: reservation.checkOut,
+      amount: reservation.amount,
+    });
+
+    await sendMail({ to: reservation.customer.email, ...email });
+  } catch (error) {
+    logError("notifyReservationConfirmation: falha ao preparar/enviar e-mail", error);
+  }
+}
+
 async function createReservationWithRules(
   input: ReservationCreationContext,
 ): Promise<Reservation> {
@@ -155,7 +187,7 @@ async function createReservationWithRules(
     : `manual_${Date.now()}`;
 
   try {
-    return await sequelize.transaction(async (transaction) => {
+    const result = await sequelize.transaction(async (transaction) => {
       // Trava a linha do quarto para serializar tentativas concorrentes de reserva
       // do mesmo quarto e evitar overbooking em requisições simultâneas.
       const room = await Room.findOne({
@@ -362,8 +394,14 @@ async function createReservationWithRules(
         { transaction },
       );
 
-      return mapReservationToDomain(created, room.localRoomId);
+      return { domain: mapReservationToDomain(created, room.localRoomId), roomName: room.name };
     });
+
+    if (input.entryType === "manual_reservation") {
+      void notifyReservationConfirmation(input.tenantId, result.roomName, result.domain);
+    }
+
+    return result.domain;
   } catch (error) {
     // Reenvio legítimo do webhook do Mercado Pago pra um pagamento já
     // confirmado: a segunda tentativa colide no índice único de

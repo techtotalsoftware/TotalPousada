@@ -25,6 +25,9 @@ export type ReservationAttributes = {
   unitNumber: number | null;
   checkedInAt: Date | null;
   checkedOutAt: Date | null;
+  // Marca quando o e-mail de lembrete de check-in foi enviado — evita
+  // reenviar o mesmo lembrete se o job de cron rodar mais de uma vez no dia.
+  reminderSentAt: Date | null;
   // Snapshot (JSON) dos adicionais vinculados no momento da reserva —
   // [{ id, name, price }] — guardado à parte do catálogo `Addon` porque o
   // preço/nome do adicional pode mudar depois e a reserva já paga precisa
@@ -36,7 +39,7 @@ export type ReservationAttributes = {
 
 export type ReservationCreationAttributes = Optional<
   ReservationAttributes,
-  "id" | "createdAt" | "updatedAt" | "unitNumber" | "checkedInAt" | "checkedOutAt" | "addons" | "guestCount"
+  "id" | "createdAt" | "updatedAt" | "unitNumber" | "checkedInAt" | "checkedOutAt" | "reminderSentAt" | "addons" | "guestCount"
 >;
 
 export class Reservation
@@ -64,6 +67,7 @@ export class Reservation
   declare unitNumber: number | null;
   declare checkedInAt: Date | null;
   declare checkedOutAt: Date | null;
+  declare reminderSentAt: Date | null;
   declare addons: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -190,6 +194,12 @@ export class Reservation
           type: DataTypes.DATE,
           allowNull: true,
           field: "checked_out_at",
+        },
+        reminderSentAt: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          field: "reminder_sent_at",
+          defaultValue: null,
         },
         addons: {
           type: DataTypes.TEXT,

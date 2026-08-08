@@ -2,8 +2,10 @@ import { Landmark, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { ExpenseDeleteButton } from '@/components/expense-delete-button';
 import { ExpenseModalForm } from '@/components/expense-modal-form';
 import { FinanceTrendChart, type FinanceMonthPoint } from '@/components/finance-trend-chart';
+import { OccupancyTrendChart, type OccupancyMonthPoint } from '@/components/occupancy-trend-chart';
 import { getAuthenticatedSession } from '@/lib/auth';
-import { getExpenses, getReservations } from '@/services/tenantService';
+import { hasPlanAccess, TenantPlan } from '@/lib/plan-enum';
+import { getExpenses, getReservations, getRooms } from '@/services/tenantService';
 
 const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat('pt-BR', { month: 'short', year: '2-digit' });
 
@@ -46,6 +48,55 @@ function buildMonthlyTrend(
   return months;
 }
 
+function buildOccupancyTrend(
+  reservations: Array<{ status: string; amount: number; checkIn: string; checkOut: string }>,
+  roomsTotal: number,
+): OccupancyMonthPoint[] {
+  const months: Array<{ key: string; label: string; start: Date; end: Date }> = [];
+  const now = new Date();
+
+  for (let offset = 5; offset >= 0; offset -= 1) {
+    const start = new Date(Date.UTC(now.getFullYear(), now.getMonth() - offset, 1));
+    const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1));
+    months.push({ key: monthKey(start), label: MONTH_LABEL_FORMATTER.format(start), start, end });
+  }
+
+  const active = reservations.filter(
+    (reservation) => reservation.status === 'confirmed' || reservation.status === 'pending',
+  );
+
+  return months.map(({ key, label, start, end }) => {
+    const daysInMonth = Math.round((end.getTime() - start.getTime()) / 86_400_000);
+    const availableRoomNights = roomsTotal * daysInMonth;
+
+    let bookedRoomNights = 0;
+    let revenue = 0;
+
+    for (const reservation of active) {
+      const checkIn = new Date(`${reservation.checkIn}T00:00:00Z`);
+      const checkOut = new Date(`${reservation.checkOut}T00:00:00Z`);
+      if (checkIn >= end || checkOut <= start) continue;
+
+      const clippedStart = checkIn < start ? start : checkIn;
+      const clippedEnd = checkOut > end ? end : checkOut;
+      bookedRoomNights += Math.max(0, Math.round((clippedEnd.getTime() - clippedStart.getTime()) / 86_400_000));
+
+      if (checkIn >= start && checkIn < end) {
+        const amount = Number(reservation.amount);
+        revenue += Number.isFinite(amount) ? amount : 0;
+      }
+    }
+
+    return {
+      key,
+      label,
+      occupancyRate: availableRoomNights > 0 ? bookedRoomNights / availableRoomNights : 0,
+      adr: bookedRoomNights > 0 ? revenue / bookedRoomNights : 0,
+      revpar: availableRoomNights > 0 ? revenue / availableRoomNights : 0,
+    };
+  });
+}
+
 function formatCurrency(value: number, currency = 'BRL') {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -69,7 +120,11 @@ export default async function FinancePage() {
     return null;
   }
 
-  const [reservations, expenses] = await Promise.all([getReservations(session.tenantId), getExpenses(session.tenantId)]);
+  const [reservations, expenses, rooms] = await Promise.all([
+    getReservations(session.tenantId),
+    getExpenses(session.tenantId),
+    getRooms(session.tenantId),
+  ]);
   const activeReservations = reservations.filter(
     (reservation) => reservation.status === 'confirmed' || reservation.status === 'pending',
   );
@@ -81,6 +136,14 @@ export default async function FinancePage() {
   const totalExpenses = expenses.reduce((total, expense) => total + expense.amount, 0);
   const netProfit = grossRevenue - totalExpenses;
   const monthlyTrend = buildMonthlyTrend(reservations, expenses);
+
+  // ADR/RevPAR/ocupação são um recurso Enterprise, mesma régua já usada no
+  // relatório de ocupação (app/api/tenant/reports/occupancy).
+  const hasOccupancyMetrics = hasPlanAccess(session.plan, TenantPlan.ENTERPRISE);
+  const roomsTotal = rooms
+    .filter((room) => room.status === 'active')
+    .reduce((total, room) => total + room.quantity, 0);
+  const occupancyTrend = hasOccupancyMetrics ? buildOccupancyTrend(reservations, roomsTotal) : [];
 
   return (
     <div className="space-y-6">
@@ -134,6 +197,19 @@ export default async function FinancePage() {
           <FinanceTrendChart points={monthlyTrend} />
         </div>
       </section>
+
+      {hasOccupancyMetrics ? (
+        <section className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/20">
+          <h3 className="text-2xl font-semibold text-white">Ocupação, ADR e RevPAR (últimos 6 meses)</h3>
+          <p className="mt-1 text-sm text-slate-400">
+            Indicadores de performance da operação: taxa de ocupação, diária média (ADR) e receita por quarto
+            disponível (RevPAR).
+          </p>
+          <div className="mt-6">
+            <OccupancyTrendChart points={occupancyTrend} />
+          </div>
+        </section>
+      ) : null}
 
       <section className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/20">
         <h3 className="text-2xl font-semibold text-white">Custos registrados</h3>
