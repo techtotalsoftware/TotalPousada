@@ -63,27 +63,53 @@ html.light [class*='border-white/15'] {
   border-color: rgb(203 213 225 / 0.95);
 }
 
+/* Painéis de pop-up/modal (bg-slate-900 sólido, sem opacidade) não tinham
+   regra nenhuma aqui — por isso todo pop-up ficava com fundo escuro mesmo
+   no modo claro. Cobre também as variações de opacidade que apareceram
+   depois (900/95, 900/60, 950/95, 950/80, checkbox bg-slate-950 sólido...).
+   Não inclui bg-slate-950/70 (nem /50 abaixo) de propósito: é o véu por
+   trás dos modais e deve continuar escuro nos dois temas. */
+html.light [class*='bg-slate-900/95'],
 html.light [class*='bg-slate-900/85'],
 html.light [class*='bg-slate-900/80'],
-html.light [class*='bg-slate-900/70'] {
-  background-color: rgb(255 255 255 / 0.88);
+html.light [class*='bg-slate-900/70'],
+html.light [class*='bg-slate-900/60'],
+html.light [class*='bg-slate-950/95'],
+html.light [class*='bg-slate-950/80'] {
+  background-color: rgb(255 255 255 / 0.92);
+}
+
+html.light [class~='bg-slate-900'],
+html.light [class~='bg-slate-950'] {
+  background-color: rgb(255 255 255 / 0.96);
 }
 
 html.light [class*='bg-slate-900/50'],
 html.light [class*='bg-slate-900/40'],
 html.light [class*='bg-slate-800/80'],
-html.light [class*='bg-slate-800/70'] {
+html.light [class*='bg-slate-800/70'],
+html.light [class*='bg-slate-800/60'] {
   background-color: rgb(248 250 252 / 0.9);
+}
+
+html.light [class~='bg-slate-800'] {
+  background-color: rgb(248 250 252 / 0.96);
 }
 
 html.light [class*='bg-slate-950/60'],
 html.light [class*='bg-slate-950/50'],
-html.light [class*='bg-slate-950/40'] {
+html.light [class*='bg-slate-950/40'],
+html.light [class*='bg-slate-900/30'] {
   background-color: rgb(241 245 249 / 0.85);
 }
 
 html.light [class*='text-white'] {
   color: rgb(15 23 42);
+}
+
+html.light [class*='text-slate-100'],
+html.light [class*='text-slate-200'] {
+  color: rgb(30 41 59);
 }
 
 html.light [class*='text-slate-500'] {
@@ -93,4 +119,27 @@ html.light [class*='text-slate-500'] {
 html.light [class*='text-slate-400'],
 html.light [class*='text-slate-300'] {
   color: rgb(51 65 85);
+}
+
+/* Os tons de "sky" usados no app (300/200/100) foram pensados para
+   contrastar com fundo escuro — em fundo claro ficam pálidos e sem vida.
+   Aqui saturamos/escurecemos esse azul para o modo claro, mantendo o
+   mesmo azul de marca só que mais forte. */
+html.light [class*='text-sky-100'],
+html.light [class*='text-sky-200'] {
+  color: rgb(3 105 161);
+}
+
+html.light [class*='text-sky-300'],
+html.light [class*='text-sky-400'] {
+  color: rgb(2 132 199);
+}
+
+html.light [class*='ring-sky-200'],
+html.light [class*='ring-sky-300'] {
+  --tw-ring-color: rgb(2 132 199 / 0.6);
+}
+
+html.light [class*='border-sky-300'] {
+  border-color: rgb(14 165 233 / 0.7);
 }

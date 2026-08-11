@@ -49,3 +49,36 @@ export function formatCurrencyInput(value: string, currency = 'BRL', locale = 'p
 export function parseCurrencyInput(value: string) {
   return Number(extractDigits(value) || '0') / 100;
 }
+
+export function formatCpfInput(value: string) {
+  const digits = extractDigits(value).slice(0, 11);
+
+  if (digits.length > 9) {
+    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+  }
+  if (digits.length > 6) {
+    return digits.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+  }
+  if (digits.length > 3) {
+    return digits.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+  }
+  return digits;
+}
+
+export function formatPhoneInput(value: string) {
+  const digits = extractDigits(value).slice(0, 11);
+
+  if (digits.length > 10) {
+    return digits.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  }
+  if (digits.length > 6) {
+    return digits.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
+  }
+  if (digits.length > 2) {
+    return digits.replace(/(\d{2})(\d{1,4})/, '($1) $2');
+  }
+  if (digits.length > 0) {
+    return digits.replace(/(\d{1,2})/, '($1');
+  }
+  return digits;
+}

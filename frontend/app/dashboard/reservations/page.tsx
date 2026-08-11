@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarPlus2, Loader2, Sparkles } from 'lucide-react';
-import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
+import {
+  formatCpfInput,
+  formatCurrencyInput,
+  formatPhoneInput,
+  parseCurrencyInput,
+} from '@/lib/utils';
 
 type RoomOption = {
   id: string;
@@ -376,17 +381,21 @@ export default function ReservationsPage() {
               className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none ring-sky-300 transition focus:ring"
             />
             <input
+              inputMode="tel"
               value={form.guestPhone}
-              onChange={(event) => setForm((current) => ({ ...current, guestPhone: event.target.value }))}
+              onChange={(event) => setForm((current) => ({ ...current, guestPhone: formatPhoneInput(event.target.value) }))}
               required={form.entryType !== 'blocked'}
-              placeholder="Telefone"
+              placeholder="Ex.: (81) 99999-9999"
+              maxLength={15}
               className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none ring-sky-300 transition focus:ring"
             />
             <input
+              inputMode="numeric"
               value={form.guestCpf}
-              onChange={(event) => setForm((current) => ({ ...current, guestCpf: event.target.value }))}
+              onChange={(event) => setForm((current) => ({ ...current, guestCpf: formatCpfInput(event.target.value) }))}
               required={form.entryType !== 'blocked'}
-              placeholder="CPF"
+              placeholder="Ex.: 123.456.789-10"
+              maxLength={14}
               className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none ring-sky-300 transition focus:ring"
             />
             <input

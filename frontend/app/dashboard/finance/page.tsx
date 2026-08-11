@@ -250,7 +250,7 @@ export default async function FinancePage() {
           </div>
         </div>
 
-        <div className="mt-5 rounded-2xl border border-sky-400/20 bg-gradient-to-r from-slate-950/95 via-slate-900/85 to-slate-950/95 p-4 text-sm text-slate-300 shadow-lg shadow-slate-950/40">
+        <div className="mt-5 rounded-2xl border border-sky-400/20 bg-slate-900/80 p-4 text-sm text-slate-300 shadow-lg shadow-slate-950/40">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 rounded-lg border border-sky-300/20 bg-sky-400/10 p-2 text-sky-300">

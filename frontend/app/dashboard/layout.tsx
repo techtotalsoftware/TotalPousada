@@ -7,6 +7,7 @@ import {
   getVisibleDashboardNavItems,
 } from "@/lib/dashboard-access";
 import { LogoutButton } from "@/components/logout-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function DashboardLayout({
   children,
@@ -40,7 +41,8 @@ export default async function DashboardLayout({
           lockedNavItems={lockedNavItems}
         />
         <div className="min-w-0 flex-1 space-y-4">
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end gap-2">
+            <ThemeToggle />
             <LogoutButton />
           </div>
           <section className="min-w-0 space-y-4">{children}</section>
