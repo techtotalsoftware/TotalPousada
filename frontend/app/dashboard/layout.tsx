@@ -7,6 +7,7 @@ import {
   getVisibleDashboardNavItems,
 } from "@/lib/dashboard-access";
 import { LogoutButton } from "@/components/logout-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function DashboardLayout({
   children,
@@ -33,14 +34,15 @@ export default async function DashboardLayout({
 
   return (
     <main className="min-h-screen px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
-      <div className="mx-auto flex max-w-7xl flex-col items-start gap-4 lg:flex-row">
+      <div className="mx-auto flex max-w-7xl flex-col items-stretch gap-4 lg:flex-row lg:items-start">
         <DashboardSidebar
           tenantName={session.tenantName}
           navItems={navItems}
           lockedNavItems={lockedNavItems}
         />
         <div className="min-w-0 flex-1 space-y-4">
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end gap-2">
+            <ThemeToggle />
             <LogoutButton />
           </div>
           <section className="min-w-0 space-y-4">{children}</section>

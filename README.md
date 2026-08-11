@@ -60,6 +60,27 @@ backend/
 - O preço da reserva pública é sempre recalculado no servidor a partir do quarto/datas/cupom — nunca confia no valor enviado pelo cliente.
 - Endpoints públicos que gravam dados ou permitem tentativa repetida (criar reserva, validar cupom, login) passam por `lib/rate-limit.ts` antes de tocar no banco.
 
+## E-mails transacionais e lembrete de check-in
+
+- `backend/lib/mailer.ts` envia e-mail via SMTP (nodemailer), configurado por
+  `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASSWORD`/`MAIL_FROM` no `.env`.
+  Se essas variáveis não estiverem preenchidas, o envio é pulado (com aviso
+  no log) em vez de quebrar a criação de reserva — e-mail é best-effort, não
+  bloqueia o fluxo principal.
+- Confirmação de reserva é enviada automaticamente (fire-and-forget, depois
+  da transação confirmada) em `backend/actions/reservation.ts`, tanto para
+  reserva pública quanto para reserva manual criada no painel.
+- Lembrete de check-in é enviado por um job diário externo: `POST
+  /api/cron/checkin-reminders`, autenticado por `CRON_SECRET` (mesmo padrão
+  do `PROVISION_WEBHOOK_SECRET`), que varre reservas confirmadas de todos os
+  tenants com check-in no dia seguinte e ainda sem lembrete enviado
+  (`reminder_sent_at IS NULL`). Precisa de uma entrada de crontab no VPS,
+  por exemplo:
+  ```
+  0 8 * * * curl -s -X POST https://seusite.com/api/cron/checkin-reminders \
+    -H "Authorization: Bearer $CRON_SECRET"
+  ```
+
 ## Logging
 
 - `lib/logger.ts` centraliza os erros da aplicação: `logError(contexto, error, meta?)` grava um JSON estruturado (nível, timestamp, contexto, stack) em vez de `console.error` solto — fica fácil de capturar via pm2/journald no VPS e filtrar por contexto.

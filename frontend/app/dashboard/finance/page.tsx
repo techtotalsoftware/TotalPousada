@@ -2,8 +2,10 @@ import { Landmark, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { ExpenseDeleteButton } from '@/components/expense-delete-button';
 import { ExpenseModalForm } from '@/components/expense-modal-form';
 import { FinanceTrendChart, type FinanceMonthPoint } from '@/components/finance-trend-chart';
+import { OccupancyTrendChart, type OccupancyMonthPoint } from '@/components/occupancy-trend-chart';
 import { getAuthenticatedSession } from '@/lib/auth';
-import { getExpenses, getReservations } from '@/services/tenantService';
+import { hasPlanAccess, TenantPlan } from '@/lib/plan-enum';
+import { getExpenses, getReservations, getRooms } from '@/services/tenantService';
 
 const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat('pt-BR', { month: 'short', year: '2-digit' });
 
@@ -46,6 +48,55 @@ function buildMonthlyTrend(
   return months;
 }
 
+function buildOccupancyTrend(
+  reservations: Array<{ status: string; amount: number; checkIn: string; checkOut: string }>,
+  roomsTotal: number,
+): OccupancyMonthPoint[] {
+  const months: Array<{ key: string; label: string; start: Date; end: Date }> = [];
+  const now = new Date();
+
+  for (let offset = 5; offset >= 0; offset -= 1) {
+    const start = new Date(Date.UTC(now.getFullYear(), now.getMonth() - offset, 1));
+    const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1));
+    months.push({ key: monthKey(start), label: MONTH_LABEL_FORMATTER.format(start), start, end });
+  }
+
+  const active = reservations.filter(
+    (reservation) => reservation.status === 'confirmed' || reservation.status === 'pending',
+  );
+
+  return months.map(({ key, label, start, end }) => {
+    const daysInMonth = Math.round((end.getTime() - start.getTime()) / 86_400_000);
+    const availableRoomNights = roomsTotal * daysInMonth;
+
+    let bookedRoomNights = 0;
+    let revenue = 0;
+
+    for (const reservation of active) {
+      const checkIn = new Date(`${reservation.checkIn}T00:00:00Z`);
+      const checkOut = new Date(`${reservation.checkOut}T00:00:00Z`);
+      if (checkIn >= end || checkOut <= start) continue;
+
+      const clippedStart = checkIn < start ? start : checkIn;
+      const clippedEnd = checkOut > end ? end : checkOut;
+      bookedRoomNights += Math.max(0, Math.round((clippedEnd.getTime() - clippedStart.getTime()) / 86_400_000));
+
+      if (checkIn >= start && checkIn < end) {
+        const amount = Number(reservation.amount);
+        revenue += Number.isFinite(amount) ? amount : 0;
+      }
+    }
+
+    return {
+      key,
+      label,
+      occupancyRate: availableRoomNights > 0 ? bookedRoomNights / availableRoomNights : 0,
+      adr: bookedRoomNights > 0 ? revenue / bookedRoomNights : 0,
+      revpar: availableRoomNights > 0 ? revenue / availableRoomNights : 0,
+    };
+  });
+}
+
 function formatCurrency(value: number, currency = 'BRL') {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -69,7 +120,11 @@ export default async function FinancePage() {
     return null;
   }
 
-  const [reservations, expenses] = await Promise.all([getReservations(session.tenantId), getExpenses(session.tenantId)]);
+  const [reservations, expenses, rooms] = await Promise.all([
+    getReservations(session.tenantId),
+    getExpenses(session.tenantId),
+    getRooms(session.tenantId),
+  ]);
   const activeReservations = reservations.filter(
     (reservation) => reservation.status === 'confirmed' || reservation.status === 'pending',
   );
@@ -81,6 +136,14 @@ export default async function FinancePage() {
   const totalExpenses = expenses.reduce((total, expense) => total + expense.amount, 0);
   const netProfit = grossRevenue - totalExpenses;
   const monthlyTrend = buildMonthlyTrend(reservations, expenses);
+
+  // ADR/RevPAR/ocupação são um recurso Enterprise, mesma régua já usada no
+  // relatório de ocupação (app/api/tenant/reports/occupancy).
+  const hasOccupancyMetrics = hasPlanAccess(session.plan, TenantPlan.ENTERPRISE);
+  const roomsTotal = rooms
+    .filter((room) => room.status === 'active')
+    .reduce((total, room) => total + room.quantity, 0);
+  const occupancyTrend = hasOccupancyMetrics ? buildOccupancyTrend(reservations, roomsTotal) : [];
 
   return (
     <div className="space-y-6">
@@ -94,7 +157,7 @@ export default async function FinancePage() {
         </div>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <div className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6 text-white">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-400">Faturamento Bruto</p>
@@ -135,9 +198,56 @@ export default async function FinancePage() {
         </div>
       </section>
 
+      {hasOccupancyMetrics ? (
+        <section className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/20">
+          <h3 className="text-2xl font-semibold text-white">Ocupação, ADR e RevPAR (últimos 6 meses)</h3>
+          <p className="mt-1 text-sm text-slate-400">
+            Indicadores de performance da operação: taxa de ocupação, diária média (ADR) e receita por quarto
+            disponível (RevPAR).
+          </p>
+          <div className="mt-6">
+            <OccupancyTrendChart points={occupancyTrend} />
+          </div>
+        </section>
+      ) : null}
+
       <section className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/20">
         <h3 className="text-2xl font-semibold text-white">Custos registrados</h3>
-        <div className="mt-6 overflow-hidden rounded-[24px] border border-white/10">
+
+        {/* Cards — só no mobile. A tabela (sm:block) cobre tablet/desktop;
+            5 colunas espremidas num telão de 375px obrigava a rolar pra
+            ver valor/ações. */}
+        <div className="mt-6 space-y-3 sm:hidden">
+          {expenses.length ? (
+            expenses.map((expense) => (
+              <div
+                key={expense.id}
+                className="rounded-2xl border border-white/10 bg-slate-900/50 p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-white">{expense.description}</p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {expense.category} · {formatLongDate(expense.date)}
+                    </p>
+                  </div>
+                  <p className="shrink-0 font-semibold text-rose-300">
+                    {formatCurrency(expense.amount)}
+                  </p>
+                </div>
+                <div className="mt-3">
+                  <ExpenseDeleteButton expenseId={expense.id} description={expense.description} />
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-2xl border border-dashed border-white/10 px-4 py-10 text-center text-sm text-slate-400">
+              Sua operação ainda não registrou despesas.
+            </p>
+          )}
+        </div>
+
+        <div className="mt-6 hidden overflow-hidden rounded-[24px] border border-white/10 sm:block">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-white/10 text-sm">
               <thead className="bg-slate-950/60 text-left text-slate-400">
@@ -174,7 +284,7 @@ export default async function FinancePage() {
           </div>
         </div>
 
-        <div className="mt-5 rounded-2xl border border-sky-400/20 bg-gradient-to-r from-slate-950/95 via-slate-900/85 to-slate-950/95 p-4 text-sm text-slate-300 shadow-lg shadow-slate-950/40">
+        <div className="mt-5 rounded-2xl border border-sky-400/20 bg-slate-900/80 p-4 text-sm text-slate-300 shadow-lg shadow-slate-950/40">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 rounded-lg border border-sky-300/20 bg-sky-400/10 p-2 text-sky-300">

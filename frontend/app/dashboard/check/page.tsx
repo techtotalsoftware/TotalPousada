@@ -330,7 +330,7 @@ export default function CheckPage() {
         ) : null}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <article className="rounded-[24px] border border-white/10 bg-slate-900/80 p-5 text-white">
           <p className="text-sm text-slate-400">Chegadas pendentes</p>
           <p className="mt-2 text-3xl font-semibold">{totals.arrivals}</p>
@@ -381,7 +381,76 @@ export default function CheckPage() {
             </div>
           </div>
 
-          <div className="mt-5 overflow-hidden rounded-[24px] border border-white/10">
+          {/* Lista em cards — só no mobile. A tabela abaixo (sm:block) cobre
+              tablet/desktop; manter as duas evita compactar 4 colunas ricas
+              (hóspede, período, status, ações) numa tabela ilegível no celular. */}
+          <div className="mt-5 space-y-3 sm:hidden">
+            {isLoading ? (
+              <p className="rounded-2xl border border-white/10 bg-slate-900/50 px-4 py-10 text-center text-sm text-slate-400">
+                Carregando reservas do banco...
+              </p>
+            ) : filteredStays.length ? (
+              filteredStays.map((stay) => (
+                <div
+                  key={stay.id}
+                  className="rounded-2xl border border-white/10 bg-slate-900/50 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium text-white">{stay.guestName}</p>
+                      <p className="text-xs text-slate-400">
+                        {stay.room} · {stay.peopleCount} pessoa(s)
+                      </p>
+                    </div>
+                    <span className={`inline-flex shrink-0 rounded-full border px-2.5 py-1 text-xs ${statusBadge(stay.status)}`}>
+                      {statusLabel(stay.status)}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm text-slate-300">
+                    {formatShortDate(stay.checkInDate)} - {formatShortDate(stay.checkOutDate)}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    In: {formatDateTime(stay.checkedInAt)} · Out: {formatDateTime(stay.checkedOutAt)}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={!canCheckInToday(stay) || processingStayId !== null}
+                      onClick={() => handleCheckIn(stay.id)}
+                      className="inline-flex items-center gap-1 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-200 disabled:cursor-not-allowed disabled:opacity-35"
+                    >
+                      <DoorOpen className="h-3.5 w-3.5" /> Check-in
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!canCheckOutToday(stay) || processingStayId !== null}
+                      onClick={() => handleCheckOut(stay.id)}
+                      className="inline-flex items-center gap-1 rounded-xl border border-sky-400/30 bg-sky-500/10 px-3 py-1.5 text-xs font-medium text-sky-200 disabled:cursor-not-allowed disabled:opacity-35"
+                    >
+                      <ClipboardCheck className="h-3.5 w-3.5" /> Check-out
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    {stay.status === 'reserved'
+                      ? canCheckInToday(stay)
+                        ? 'Check-in liberado hoje.'
+                        : `Check-in somente em ${formatShortDate(stay.checkInDate)}.`
+                      : stay.status === 'checked_in'
+                        ? canCheckOutToday(stay)
+                          ? 'Check-out liberado hoje.'
+                          : `Checkout permitido apenas em ${formatShortDate(stay.checkOutDate)}.`
+                        : 'Reserva já finalizada.'}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="rounded-2xl border border-dashed border-white/10 px-4 py-10 text-center text-sm text-slate-400">
+                Nenhuma reserva encontrada com o filtro atual.
+              </p>
+            )}
+          </div>
+
+          <div className="mt-5 hidden overflow-hidden rounded-[24px] border border-white/10 sm:block">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-white/10 text-sm">
                 <thead className="bg-slate-950/60 text-left text-slate-400">

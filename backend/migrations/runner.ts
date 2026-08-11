@@ -12,6 +12,7 @@ import migration006 from "./006-add-reservation-unit-number-column";
 import migration007 from "./007-add-reservation-stay-columns";
 import migration008 from "./008-add-tenant-slug-column";
 import migration009 from "./009-add-unique-indexes";
+import migration010 from "./010-add-reservation-reminder-sent-at-column";
 
 // Ordem de execução. Cada migration aplicada fica registrada na tabela
 // `SequelizeMeta` e nunca roda de novo — ao contrário do antigo esquema de
@@ -27,6 +28,10 @@ const migrations: Array<{ name: string; migration: Migration }> = [
   { name: "007-add-reservation-stay-columns", migration: migration007 },
   { name: "008-add-tenant-slug-column", migration: migration008 },
   { name: "009-add-unique-indexes", migration: migration009 },
+  {
+    name: "010-add-reservation-reminder-sent-at-column",
+    migration: migration010,
+  },
 ];
 
 export async function runMigrations(sequelize: Sequelize, models: DbModels) {

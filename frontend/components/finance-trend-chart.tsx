@@ -73,6 +73,8 @@ export function FinanceTrendChart({ points }: { points: FinanceMonthPoint[] }) {
                 key={point.key}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex((current) => (current === index ? null : current))}
+                onClick={() => setHoveredIndex((current) => (current === index ? null : index))}
+                className="cursor-pointer"
               >
                 <rect x={groupX} y={CHART_TOP_PADDING} width={groupWidth} height={plotHeight} fill="transparent" />
                 <rect

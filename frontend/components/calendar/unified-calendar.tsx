@@ -30,8 +30,10 @@ import {
   addDays,
   cn,
   differenceInDays,
+  formatCpfInput,
   formatCurrencyInput,
   formatDateLabel,
+  formatPhoneInput,
   parseCurrencyInput,
 } from "@/lib/utils";
 import type {
@@ -177,8 +179,8 @@ function createDraft(reservation: Reservation): ReservationDraft {
     currency: reservation.currency,
     customerName: reservation.customer.name,
     customerEmail: reservation.customer.email,
-    customerPhone: reservation.customer.phone,
-    customerCpf: reservation.customer.cpf ?? "",
+    customerPhone: formatPhoneInput(reservation.customer.phone),
+    customerCpf: formatCpfInput(reservation.customer.cpf ?? ""),
     notes: reservation.notes,
   };
 }
@@ -861,15 +863,17 @@ export function UnifiedCalendar({ tenantName }: { tenantName: string }) {
                     </span>
                     <input
                       type="text"
+                      inputMode="tel"
                       value={manualForm.guestPhone}
                       onChange={(event) =>
                         setManualForm((current) => ({
                           ...current,
-                          guestPhone: event.target.value,
+                          guestPhone: formatPhoneInput(event.target.value),
                         }))
                       }
                       required={manualForm.entryType === "manual_reservation"}
-                      placeholder="Ex.: +55 81 99999-9999"
+                      placeholder="Ex.: (81) 99999-9999"
+                      maxLength={15}
                       className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500"
                     />
                   </label>
@@ -881,15 +885,17 @@ export function UnifiedCalendar({ tenantName }: { tenantName: string }) {
                   </span>
                   <input
                     type="text"
+                    inputMode="numeric"
                     value={manualForm.guestCpf}
                     onChange={(event) =>
                       setManualForm((current) => ({
                         ...current,
-                        guestCpf: event.target.value,
+                        guestCpf: formatCpfInput(event.target.value),
                       }))
                     }
                     required={manualForm.entryType === "manual_reservation"}
                     placeholder="Ex.: 123.456.789-10"
+                    maxLength={14}
                     className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500"
                   />
                 </label>
@@ -1091,14 +1097,22 @@ export function UnifiedCalendar({ tenantName }: { tenantName: string }) {
                     </span>
                     <input
                       type="text"
+                      inputMode="tel"
                       value={draft.customerPhone}
                       onChange={(event) =>
                         setDraft((current) =>
                           current
-                            ? { ...current, customerPhone: event.target.value }
+                            ? {
+                                ...current,
+                                customerPhone: formatPhoneInput(
+                                  event.target.value,
+                                ),
+                              }
                             : current,
                         )
                       }
+                      placeholder="Ex.: (81) 99999-9999"
+                      maxLength={15}
                       className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none"
                     />
                   </label>
@@ -1108,15 +1122,22 @@ export function UnifiedCalendar({ tenantName }: { tenantName: string }) {
                     </span>
                     <input
                       type="text"
+                      inputMode="numeric"
                       value={draft.customerCpf}
                       onChange={(event) =>
                         setDraft((current) =>
                           current
-                            ? { ...current, customerCpf: event.target.value }
+                            ? {
+                                ...current,
+                                customerCpf: formatCpfInput(
+                                  event.target.value,
+                                ),
+                              }
                             : current,
                         )
                       }
                       placeholder="Ex.: 123.456.789-10"
+                      maxLength={14}
                       className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none"
                     />
                   </label>

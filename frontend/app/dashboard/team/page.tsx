@@ -5,6 +5,7 @@ import { CalendarDays, Clock3, Plus, ShieldCheck } from "lucide-react";
 import type { DashboardFeatureKey } from "@/lib/dashboard-access";
 import { DEFAULT_STAFF_FEATURES, hasPlanAccessToFeature } from "@/lib/dashboard-access";
 import { TenantPlan } from "@/lib/plan-enum";
+import { formatPhoneInput } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 const TEAM_ROLE_OPTIONS = [
@@ -34,12 +35,28 @@ type WeekDayKey = (typeof WEEK_DAYS)[number]["key"];
 type ScheduleShift = "morning" | "afternoon" | "night" | null;
 type WeeklySchedule = Record<WeekDayKey, ScheduleShift>;
 
-const SHIFT_SELECT_OPTIONS: Array<{ value: NonNullable<ScheduleShift> | ""; label: string }> = [
+const SHIFT_OPTIONS: Array<{
+  value: NonNullable<ScheduleShift> | "";
+  label: string;
+}> = [
   { value: "", label: "Folga" },
   { value: "morning", label: "Manhã" },
   { value: "afternoon", label: "Tarde" },
   { value: "night", label: "Noite" },
 ];
+
+function shiftActiveClasses(value: ScheduleShift) {
+  switch (value) {
+    case "morning":
+      return "border-amber-400/50 bg-amber-500/20 text-amber-100";
+    case "afternoon":
+      return "border-orange-400/50 bg-orange-500/20 text-orange-100";
+    case "night":
+      return "border-indigo-400/50 bg-indigo-500/20 text-indigo-100";
+    default:
+      return "border-slate-400/50 bg-slate-600/30 text-slate-100";
+  }
+}
 
 function emptyWeeklySchedule(): WeeklySchedule {
   return WEEK_DAYS.reduce((acc, day) => {
@@ -157,7 +174,7 @@ export default function TeamPage() {
 
       if (!response.ok) {
         throw new Error(
-          payload.message ?? "Nao foi possivel carregar a equipe.",
+          payload.message ?? "Não foi possível carregar a equipe.",
         );
       }
 
@@ -251,7 +268,7 @@ export default function TeamPage() {
 
       if (!response.ok) {
         const payload = (await response.json()) as { message?: string };
-        setError(payload.message ?? "Nao foi possivel criar colaborador.");
+        setError(payload.message ?? "Não foi possível criar colaborador.");
         return;
       }
 
@@ -339,7 +356,7 @@ export default function TeamPage() {
 
       if (!response.ok) {
         const payload = (await response.json()) as { message?: string };
-        setError(payload.message ?? "Nao foi possivel salvar permissoes.");
+        setError(payload.message ?? "Não foi possível salvar permissões.");
         return;
       }
 
@@ -373,7 +390,7 @@ export default function TeamPage() {
 
       if (!response.ok) {
         const payload = (await response.json()) as { message?: string };
-        setError(payload.message ?? "Nao foi possivel salvar a escala.");
+        setError(payload.message ?? "Não foi possível salvar a escala.");
         return;
       }
 
@@ -412,7 +429,7 @@ export default function TeamPage() {
 
       if (!response.ok) {
         const payload = (await response.json()) as { message?: string };
-        setError(payload.message ?? "Nao foi possivel excluir colaborador.");
+        setError(payload.message ?? "Não foi possível excluir colaborador.");
         return;
       }
 
@@ -433,15 +450,15 @@ export default function TeamPage() {
     <div className="space-y-6">
       <section className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/20">
         <p className="text-xs font-semibold uppercase tracking-[0.35em] text-sky-300">
-          Operacao interna
+          Operação interna
         </p>
         <h2 className="mt-3 text-3xl font-semibold text-white">
           Gerenciamento de Equipe
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">
-          Controle real da equipe com cadastro de login interno (usuario/senha),
-          ativacao/inativacao, abertura e encerramento de turno, e permissoes
-          por pagina do sistema.
+          Controle real da equipe com cadastro de login interno (usuário/senha),
+          ativação/inativação, abertura e encerramento de turno, e permissões
+          por página do sistema.
         </p>
         {tenantSlug ? (
           <p className="mt-2 text-xs text-slate-500">
@@ -456,7 +473,7 @@ export default function TeamPage() {
         </section>
       ) : null}
 
-      <section className="grid gap-4 xl:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <article className="rounded-[24px] border border-white/10 bg-slate-900/80 p-5 text-white">
           <p className="text-sm text-slate-400">Colaboradores ativos</p>
           <p className="mt-2 text-3xl font-semibold">{summary.active}</p>
@@ -712,43 +729,52 @@ export default function TeamPage() {
                       <CalendarDays className="h-4 w-4" /> Escala semanal
                     </p>
 
-                    <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                    <div className="space-y-1.5">
                       {WEEK_DAYS.map((day) => {
                         const value =
                           scheduleDraft[member.id]?.[day.key] ?? null;
 
                         return (
-                          <label
+                          <div
                             key={day.key}
-                            className="flex flex-col items-center gap-1 rounded-lg border border-white/5 bg-slate-950/40 px-1.5 py-2 text-[11px] text-slate-300"
+                            className="flex items-center gap-1.5 rounded-lg border border-white/5 bg-slate-950/40 px-1.5 py-1.5 sm:gap-2 sm:px-2"
                           >
-                            <span className="font-medium text-slate-400">
+                            <span className="w-6 shrink-0 text-[11px] font-medium text-slate-400 sm:w-8">
                               {day.label}
                             </span>
-                            <select
-                              value={value ?? ""}
-                              disabled={!canManage}
-                              onChange={(event) =>
-                                setScheduleDraft((prev) => ({
-                                  ...prev,
-                                  [member.id]: {
-                                    ...(prev[member.id] ??
-                                      emptyWeeklySchedule()),
-                                    [day.key]:
-                                      (event.target.value as ScheduleShift) ||
-                                      null,
-                                  },
-                                }))
-                              }
-                              className="w-full cursor-pointer rounded-md border border-white/10 bg-slate-950 px-1 py-1 text-[10px] text-slate-200 outline-none focus:border-sky-400/50 disabled:cursor-not-allowed"
-                            >
-                              {SHIFT_SELECT_OPTIONS.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
+                            <div className="grid flex-1 grid-cols-4 gap-1">
+                              {SHIFT_OPTIONS.map((option) => {
+                                const isActive = (value ?? "") === option.value;
+
+                                return (
+                                  <button
+                                    key={option.value}
+                                    type="button"
+                                    disabled={!canManage}
+                                    onClick={() =>
+                                      setScheduleDraft((prev) => ({
+                                        ...prev,
+                                        [member.id]: {
+                                          ...(prev[member.id] ??
+                                            emptyWeeklySchedule()),
+                                          [day.key]: (option.value ||
+                                            null) as ScheduleShift,
+                                        },
+                                      }))
+                                    }
+                                    className={[
+                                      "min-w-0 rounded-md border px-0.5 py-1.5 text-center text-[9px] font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 sm:px-1 sm:text-[10px]",
+                                      isActive
+                                        ? shiftActiveClasses(option.value || null)
+                                        : "border-white/10 bg-slate-950/60 text-slate-500 hover:border-white/20 hover:text-slate-300",
+                                    ].join(" ")}
+                                  >
+                                    {option.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
                         );
                       })}
                     </div>
@@ -782,7 +808,7 @@ export default function TeamPage() {
         <article className="space-y-6">
           <form
             onSubmit={addMember}
-            className="sticky top-6 rounded-[28px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/40 backdrop-blur-md"
+            className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/40 backdrop-blur-md xl:sticky xl:top-6"
           >
             <div className="mb-6">
               <h3 className="text-xl font-bold tracking-tight text-white">
@@ -838,11 +864,16 @@ export default function TeamPage() {
                 className="rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 hover:border-white/20 focus:border-sky-400/50 focus:bg-slate-950/80 focus:ring-2 focus:ring-sky-400/20"
               />
               <input
+                inputMode="tel"
                 value={form.phone}
                 onChange={(event) =>
-                  setForm((prev) => ({ ...prev, phone: event.target.value }))
+                  setForm((prev) => ({
+                    ...prev,
+                    phone: formatPhoneInput(event.target.value),
+                  }))
                 }
-                placeholder="Telefone"
+                placeholder="Ex.: (81) 99999-9999"
+                maxLength={15}
                 className="rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 hover:border-white/20 focus:border-sky-400/50 focus:bg-slate-950/80 focus:ring-2 focus:ring-sky-400/20"
               />
 
@@ -943,7 +974,7 @@ export default function TeamPage() {
         title="Excluir colaborador"
         description={
           memberToDelete
-            ? `Tem certeza que deseja excluir ${memberToDelete.name}? Esta acao nao pode ser desfeita.`
+            ? `Tem certeza que deseja excluir ${memberToDelete.name}? Esta ação não pode ser desfeita.`
             : ""
         }
         confirmLabel="Excluir colaborador"

@@ -86,7 +86,7 @@ export default function ReportsPage() {
               Ocupação, receita e reservas do mês selecionado.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <input
               type="month"
               value={month}
@@ -94,7 +94,7 @@ export default function ReportsPage() {
               className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none ring-sky-300 transition focus:ring"
             />
             {isPremiumOrAbove ? (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <a
                   href={`/api/tenant/reports/occupancy?month=${month}&format=csv`}
                   className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-sky-900/30 transition hover:bg-sky-400"

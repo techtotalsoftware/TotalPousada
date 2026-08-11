@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ToastProvider } from "@/components/toast-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { FloatingThemeToggle } from "@/components/floating-theme-toggle";
 import { CookieConsent } from "@/components/cookie-consent";
 
 export const metadata: Metadata = {
@@ -23,9 +23,7 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <ToastProvider>
-          <div className="fixed right-4 top-4 z-50 sm:right-6 sm:top-6">
-            <ThemeToggle />
-          </div>
+          <FloatingThemeToggle />
           {children}
           <CookieConsent />
         </ToastProvider>

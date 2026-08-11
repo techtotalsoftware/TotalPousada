@@ -973,7 +973,13 @@ export function CalendarManagement() {
         )}
 
         <div className="mt-4 overflow-x-auto">
-          <div className="grid min-w-[920px] gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(days.length, 1)}, minmax(56px, 1fr))` }}>
+          <div
+            className="grid gap-2"
+            style={{
+              gridTemplateColumns: `repeat(${Math.max(days.length, 1)}, minmax(56px, 1fr))`,
+              minWidth: `${Math.max(days.length, 1) * 56 + Math.max(days.length - 1, 0) * 8}px`,
+            }}
+          >
             {days.map((day) => {
               const state = getDayState(day, roomReservationsInWindow);
               const label = day.toLocaleDateString("pt-BR", {
