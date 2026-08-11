@@ -72,7 +72,7 @@ export function CalendarControls({
             {formatLongDate(days[0].toISOString().slice(0, 10))} até{" "}
             {formatLongDate(days[days.length - 1].toISOString().slice(0, 10))}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => onShiftTimeline("previous")}
               className="rounded-2xl border border-white/10 bg-slate-900/80 p-3 text-slate-200 transition hover:border-white/20"
@@ -86,7 +86,7 @@ export function CalendarControls({
                 const newDate = new Date(e.target.value + "T00:00:00");
                 if (!isNaN(newDate.getTime())) onSetGridStart(newDate);
               }}
-              className="rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm font-medium text-slate-200 focus:outline-none focus:border-sky-500 transition"
+              className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm font-medium text-slate-200 focus:outline-none focus:border-sky-500 transition sm:flex-none"
               style={{ colorScheme: "dark" }}
             />
             <button

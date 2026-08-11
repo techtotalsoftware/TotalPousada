@@ -163,7 +163,7 @@ export default function AddonsPage() {
       </section>
 
       <section className="rounded-[30px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/20">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="rounded-xl border border-white/10 bg-slate-950/50 p-2">
               <Gift className="h-5 w-5 text-amber-300" />
@@ -178,7 +178,7 @@ export default function AddonsPage() {
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-400"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-400"
           >
             <Plus className="h-4 w-4" /> Novo
           </button>

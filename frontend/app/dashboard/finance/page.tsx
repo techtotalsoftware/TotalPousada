@@ -157,7 +157,7 @@ export default async function FinancePage() {
         </div>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <div className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6 text-white">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-400">Faturamento Bruto</p>
@@ -213,7 +213,41 @@ export default async function FinancePage() {
 
       <section className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/20">
         <h3 className="text-2xl font-semibold text-white">Custos registrados</h3>
-        <div className="mt-6 overflow-hidden rounded-[24px] border border-white/10">
+
+        {/* Cards — só no mobile. A tabela (sm:block) cobre tablet/desktop;
+            5 colunas espremidas num telão de 375px obrigava a rolar pra
+            ver valor/ações. */}
+        <div className="mt-6 space-y-3 sm:hidden">
+          {expenses.length ? (
+            expenses.map((expense) => (
+              <div
+                key={expense.id}
+                className="rounded-2xl border border-white/10 bg-slate-900/50 p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-white">{expense.description}</p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {expense.category} · {formatLongDate(expense.date)}
+                    </p>
+                  </div>
+                  <p className="shrink-0 font-semibold text-rose-300">
+                    {formatCurrency(expense.amount)}
+                  </p>
+                </div>
+                <div className="mt-3">
+                  <ExpenseDeleteButton expenseId={expense.id} description={expense.description} />
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-2xl border border-dashed border-white/10 px-4 py-10 text-center text-sm text-slate-400">
+              Sua operação ainda não registrou despesas.
+            </p>
+          )}
+        </div>
+
+        <div className="mt-6 hidden overflow-hidden rounded-[24px] border border-white/10 sm:block">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-white/10 text-sm">
               <thead className="bg-slate-950/60 text-left text-slate-400">

@@ -34,7 +34,7 @@ export default async function DashboardLayout({
 
   return (
     <main className="min-h-screen px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
-      <div className="mx-auto flex max-w-7xl flex-col items-start gap-4 lg:flex-row">
+      <div className="mx-auto flex max-w-7xl flex-col items-stretch gap-4 lg:flex-row lg:items-start">
         <DashboardSidebar
           tenantName={session.tenantName}
           navItems={navItems}

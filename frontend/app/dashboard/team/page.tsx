@@ -174,7 +174,7 @@ export default function TeamPage() {
 
       if (!response.ok) {
         throw new Error(
-          payload.message ?? "Nao foi possivel carregar a equipe.",
+          payload.message ?? "Não foi possível carregar a equipe.",
         );
       }
 
@@ -268,7 +268,7 @@ export default function TeamPage() {
 
       if (!response.ok) {
         const payload = (await response.json()) as { message?: string };
-        setError(payload.message ?? "Nao foi possivel criar colaborador.");
+        setError(payload.message ?? "Não foi possível criar colaborador.");
         return;
       }
 
@@ -356,7 +356,7 @@ export default function TeamPage() {
 
       if (!response.ok) {
         const payload = (await response.json()) as { message?: string };
-        setError(payload.message ?? "Nao foi possivel salvar permissoes.");
+        setError(payload.message ?? "Não foi possível salvar permissões.");
         return;
       }
 
@@ -390,7 +390,7 @@ export default function TeamPage() {
 
       if (!response.ok) {
         const payload = (await response.json()) as { message?: string };
-        setError(payload.message ?? "Nao foi possivel salvar a escala.");
+        setError(payload.message ?? "Não foi possível salvar a escala.");
         return;
       }
 
@@ -429,7 +429,7 @@ export default function TeamPage() {
 
       if (!response.ok) {
         const payload = (await response.json()) as { message?: string };
-        setError(payload.message ?? "Nao foi possivel excluir colaborador.");
+        setError(payload.message ?? "Não foi possível excluir colaborador.");
         return;
       }
 
@@ -450,15 +450,15 @@ export default function TeamPage() {
     <div className="space-y-6">
       <section className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/20">
         <p className="text-xs font-semibold uppercase tracking-[0.35em] text-sky-300">
-          Operacao interna
+          Operação interna
         </p>
         <h2 className="mt-3 text-3xl font-semibold text-white">
           Gerenciamento de Equipe
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">
-          Controle real da equipe com cadastro de login interno (usuario/senha),
-          ativacao/inativacao, abertura e encerramento de turno, e permissoes
-          por pagina do sistema.
+          Controle real da equipe com cadastro de login interno (usuário/senha),
+          ativação/inativação, abertura e encerramento de turno, e permissões
+          por página do sistema.
         </p>
         {tenantSlug ? (
           <p className="mt-2 text-xs text-slate-500">
@@ -473,7 +473,7 @@ export default function TeamPage() {
         </section>
       ) : null}
 
-      <section className="grid gap-4 xl:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <article className="rounded-[24px] border border-white/10 bg-slate-900/80 p-5 text-white">
           <p className="text-sm text-slate-400">Colaboradores ativos</p>
           <p className="mt-2 text-3xl font-semibold">{summary.active}</p>
@@ -737,9 +737,9 @@ export default function TeamPage() {
                         return (
                           <div
                             key={day.key}
-                            className="flex items-center gap-2 rounded-lg border border-white/5 bg-slate-950/40 px-2 py-1.5"
+                            className="flex items-center gap-1.5 rounded-lg border border-white/5 bg-slate-950/40 px-1.5 py-1.5 sm:gap-2 sm:px-2"
                           >
-                            <span className="w-8 shrink-0 text-[11px] font-medium text-slate-400">
+                            <span className="w-6 shrink-0 text-[11px] font-medium text-slate-400 sm:w-8">
                               {day.label}
                             </span>
                             <div className="grid flex-1 grid-cols-4 gap-1">
@@ -763,7 +763,7 @@ export default function TeamPage() {
                                       }))
                                     }
                                     className={[
-                                      "rounded-md border px-1 py-1.5 text-center text-[10px] font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50",
+                                      "min-w-0 rounded-md border px-0.5 py-1.5 text-center text-[9px] font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 sm:px-1 sm:text-[10px]",
                                       isActive
                                         ? shiftActiveClasses(option.value || null)
                                         : "border-white/10 bg-slate-950/60 text-slate-500 hover:border-white/20 hover:text-slate-300",
@@ -808,7 +808,7 @@ export default function TeamPage() {
         <article className="space-y-6">
           <form
             onSubmit={addMember}
-            className="sticky top-6 rounded-[28px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/40 backdrop-blur-md"
+            className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/40 backdrop-blur-md xl:sticky xl:top-6"
           >
             <div className="mb-6">
               <h3 className="text-xl font-bold tracking-tight text-white">
@@ -974,7 +974,7 @@ export default function TeamPage() {
         title="Excluir colaborador"
         description={
           memberToDelete
-            ? `Tem certeza que deseja excluir ${memberToDelete.name}? Esta acao nao pode ser desfeita.`
+            ? `Tem certeza que deseja excluir ${memberToDelete.name}? Esta ação não pode ser desfeita.`
             : ""
         }
         confirmLabel="Excluir colaborador"

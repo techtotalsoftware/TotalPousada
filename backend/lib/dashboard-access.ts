@@ -29,19 +29,19 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   {
     key: "calendar",
     href: "/dashboard/calendar",
-    label: "Calendario",
-    description: "Operacao e moderacao de reservas",
+    label: "Calendário",
+    description: "Operação e moderação de reservas",
   },
   {
     key: "calendar_management",
     href: "/dashboard/calendar-management",
-    label: "Calendario de gestao",
+    label: "Calendário de gestão",
     description: "Fechamento de quartos e ajuste de tarifa",
   },
   {
     key: "promotions",
     href: "/dashboard/promotions",
-    label: "Promocoes",
+    label: "Promoções",
     description: "Gerenciamento de cupons e descontos",
   },
   {
@@ -61,13 +61,13 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     key: "check",
     href: "/dashboard/check",
     label: "Check-in e Check-out",
-    description: "Fluxo operacional da recepcao",
+    description: "Fluxo operacional da recepção",
   },
   {
     key: "rooms",
     href: "/dashboard/rooms",
     label: "Quartos",
-    description: "Status operacional e governanca",
+    description: "Status operacional e governança",
   },
   {
     key: "gallery",
@@ -79,31 +79,31 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     key: "team",
     href: "/dashboard/team",
     label: "Equipe",
-    description: "Escala, turnos e gestao de pessoas",
+    description: "Escala, turnos e gestão de pessoas",
   },
   {
     key: "finance",
     href: "/dashboard/finance",
     label: "Financeiro",
-    description: "KPIs, despesas e margem liquida",
+    description: "KPIs, despesas e margem líquida",
   },
   {
     key: "guests",
     href: "/dashboard/guests",
-    label: "Historico de hospedes",
-    description: "Dados cadastrais e historico de estadias",
+    label: "Histórico de hóspedes",
+    description: "Dados cadastrais e histórico de estadias",
   },
   {
     key: "reports",
     href: "/dashboard/reports",
-    label: "Relatorios",
-    description: "Ocupacao, receita e desempenho da pousada",
+    label: "Relatórios",
+    description: "Ocupação, receita e desempenho da pousada",
   },
   {
     key: "audit",
     href: "/dashboard/audit",
     label: "Auditoria",
-    description: "Trilha de acoes realizadas pela equipe",
+    description: "Trilha de ações realizadas pela equipe",
   },
 ];
 

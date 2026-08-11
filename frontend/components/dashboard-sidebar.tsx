@@ -215,7 +215,7 @@ export function DashboardSidebar({
             className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="fixed inset-y-0 left-0 z-50 w-80 overflow-y-auto rounded-r-[28px] border-r border-slate-200/80 bg-white/95 p-5 shadow-2xl shadow-slate-900/20 backdrop-blur dark:border-white/10 dark:bg-slate-900/95 dark:shadow-slate-950/50">
+          <aside className="fixed inset-y-0 left-0 z-50 w-80 max-w-[88vw] overflow-y-auto rounded-r-[28px] border-r border-slate-200/80 bg-white/95 p-5 shadow-2xl shadow-slate-900/20 backdrop-blur dark:border-white/10 dark:bg-slate-900/95 dark:shadow-slate-950/50">
             <div className="mb-4 flex justify-end">
               <button
                 onClick={() => setMobileOpen(false)}
